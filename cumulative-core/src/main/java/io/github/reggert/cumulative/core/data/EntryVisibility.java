@@ -1,5 +1,6 @@
 package io.github.reggert.cumulative.core.data;
 
+import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 
@@ -84,6 +85,18 @@ public final class EntryVisibility implements Serializable, Comparable<EntryVisi
      */
     public static EntryVisibility fromColumnVisiblity(@Nonnull final ColumnVisibility columnVisibility) {
         return new EntryVisibility(ByteSequence.fromByteArray(columnVisibility.flatten()));
+    }
+
+
+    /**
+     * Extracts the visibility from an Accumulo {@code Key} object.
+     *
+     * @param accumuloKey
+     * the key from which to extract the visibility.
+     * @return a new {@code ColumnQualifier} object.
+     */
+    public static EntryVisibility fromAccumuloKey(@Nonnull final Key accumuloKey) {
+        return EntryVisibility.fromHadoopText(accumuloKey.getColumnVisibility());
     }
 
 

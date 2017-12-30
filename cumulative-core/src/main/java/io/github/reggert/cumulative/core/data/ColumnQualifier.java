@@ -78,7 +78,7 @@ public final class ColumnQualifier implements Serializable, Comparable<ColumnQua
      * Extracts the column qualifier from an Accumulo {@code Key} object.
      *
      * @param accumuloKey
-     * the key from which to extract the row identifier.
+     * the key from which to extract the column qualifier.
      * @return a new {@code ColumnQualifier} object.
      */
     public static ColumnQualifier fromAccumuloKey(@Nonnull final Key accumuloKey) {
