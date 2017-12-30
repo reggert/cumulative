@@ -22,7 +22,7 @@ public final class TableName implements Serializable, Comparable<TableName> {
     public static final Pattern VALID_PART = Pattern.compile("[^\\.\\s]*");
     public static final Pattern VALID_QUALIFIED_NAME = Pattern.compile("(?:(?<ns>[^\\.\\s]+)\\.)?(?<name>[^\\.\\s]+)");
     private static final Comparator<TableName> COMPARATOR =
-        comparing(TableName::getNamespace).thenComparing(comparing(TableName::getName));
+        comparing(TableName::getNamespace).thenComparing(TableName::getName);
     private final String namespace;
     private final String name;
 
