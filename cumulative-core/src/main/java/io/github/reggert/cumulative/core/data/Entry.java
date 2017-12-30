@@ -15,6 +15,7 @@ import static java.util.Objects.requireNonNull;
  * A single entry (key-value pair) stored in an Accumulo table.
  */
 public final class Entry implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final EntryKey key;
     private final EntryValue value;
 

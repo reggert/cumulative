@@ -17,6 +17,7 @@ import static java.util.Objects.requireNonNull;
  * Timestamps will always be specified when reading from Accumulo.
  */
 public final class Timestamp implements Serializable, Comparable<Timestamp> {
+    private static final long serialVersionUID = 1L;
     private final long value;
     public static final Timestamp UNSPECIFIED = new Timestamp(Long.MAX_VALUE);
 

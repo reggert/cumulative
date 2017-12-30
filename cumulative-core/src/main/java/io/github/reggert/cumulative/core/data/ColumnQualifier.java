@@ -14,6 +14,7 @@ import static java.util.Objects.requireNonNull;
  * Immutable representation of an Accumulo column qualifier..
  */
 public final class ColumnQualifier implements Serializable, Comparable<ColumnQualifier> {
+    private static final long serialVersionUID = 1L;
     /**
      * An empty qualifier. Typically indicates that the qualifier is an unused part of the key.
      */

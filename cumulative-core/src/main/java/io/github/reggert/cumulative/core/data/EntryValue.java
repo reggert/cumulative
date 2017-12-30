@@ -14,6 +14,7 @@ import static java.util.Objects.requireNonNull;
  * Immutable representation of an Accumulo value.
  */
 public final class EntryValue implements Serializable, Comparable<EntryValue> {
+    private static final long serialVersionUID = 1L;
     /**
      * An empty value.
      */

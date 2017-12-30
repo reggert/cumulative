@@ -16,6 +16,7 @@ import static java.util.Objects.requireNonNull;
  * It does not perform validation on the expressions, however.
  */
 public final class EntryVisibility implements Serializable, Comparable<EntryVisibility> {
+    private static final long serialVersionUID = 1L;
     /**
      * An empty visibility, making an entry visible to all scanners.
      */

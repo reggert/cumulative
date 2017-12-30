@@ -19,6 +19,7 @@ import static java.util.Objects.requireNonNull;
  * raw Accumulo API.
  */
 public final class EntryKey implements Serializable, Comparable<EntryKey> {
+    private static final long serialVersionUID = 1L;
     private final RowIdentifier rowIdentifier;
     private final ColumnFamily columnFamily;
     private final ColumnQualifier columnQualifier;

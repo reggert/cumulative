@@ -14,6 +14,7 @@ import static java.util.Objects.requireNonNull;
  * Immutable representation of an Accumulo rowid.
  */
 public final class RowIdentifier implements Serializable, Comparable<RowIdentifier> {
+    private static final long serialVersionUID = 1L;
     private final ByteSequence byteSequence;
 
 
