@@ -14,6 +14,10 @@ import static java.util.Objects.requireNonNull;
  * Immutable representation of an Accumulo value.
  */
 public final class EntryValue implements Serializable, Comparable<EntryValue> {
+    /**
+     * An empty value.
+     */
+    public static final EntryValue EMPTY = new EntryValue(ByteSequence.EMPTY);
     private final ByteSequence byteSequence;
 
 

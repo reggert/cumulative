@@ -17,6 +17,7 @@ import static java.util.Objects.requireNonNull;
  * An immutable sequence of bytes. Used as the internal value class for Accumulo key and value elements.
  */
 public final class ByteSequence implements Serializable, Comparable<ByteSequence> {
+    public static final ByteSequence EMPTY = new ByteSequence(new byte[0]);
     private static final long serialVersionUID = 1L;
     private static final Charset UTF8 = Charset.forName("UTF-8");
     private final byte[] bytes;

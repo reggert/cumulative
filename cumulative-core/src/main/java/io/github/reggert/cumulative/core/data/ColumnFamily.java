@@ -14,6 +14,10 @@ import static java.util.Objects.requireNonNull;
  * Immutable representation of an Accumulo column family..
  */
 public final class ColumnFamily implements Serializable, Comparable<ColumnFamily> {
+    /**
+     * An empty family name. Typically indicates that the family is an unused part of the key.
+     */
+    public static final ColumnFamily EMPTY = new ColumnFamily(ByteSequence.EMPTY);
     private final ByteSequence byteSequence;
 
 
