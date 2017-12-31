@@ -2,6 +2,7 @@ package io.github.reggert.cumulative.core.data;
 
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.accumulo.core.util.BadArgumentException;
 import org.apache.hadoop.io.Text;
 
 import javax.annotation.Nonnull;
@@ -15,17 +16,31 @@ import static java.util.Objects.requireNonNull;
  * Immutable representation of an Accumulo visibilty.
  * It does not perform validation on the expressions, however.
  */
-public final class EntryVisibility implements Serializable, Comparable<EntryVisibility> {
+public final class EntryVisibility extends ByteSequenceWrapper<EntryVisibility> {
     private static final long serialVersionUID = 1L;
     /**
      * An empty visibility, making an entry visible to all scanners.
      */
     public static final EntryVisibility DEFAULT = new EntryVisibility(ByteSequence.EMPTY);
-    private final ByteSequence byteSequence;
 
 
     private EntryVisibility(@Nonnull final ByteSequence byteSequence) {
-        this.byteSequence = byteSequence;
+        super(byteSequence);
+    }
+
+
+    private EntryVisibility(@Nonnull Text hadoopText) {
+        super(hadoopText);
+    }
+
+
+    private EntryVisibility(@Nonnull String string) {
+        super(string);
+    }
+
+
+    private EntryVisibility(@Nonnull byte[] bytes) {
+        super(bytes);
     }
 
 
@@ -37,7 +52,7 @@ public final class EntryVisibility implements Serializable, Comparable<EntryVisi
      * @return a new {@code EntryVisibility}
      */
     public static EntryVisibility fromByteSequence(@Nonnull final ByteSequence byteSequence) {
-        return new EntryVisibility(requireNonNull(byteSequence, "byteSequence"));
+        return new EntryVisibility(byteSequence);
     }
 
 
@@ -49,7 +64,7 @@ public final class EntryVisibility implements Serializable, Comparable<EntryVisi
      * @return a new {@code EntryVisibility}
      */
     public static EntryVisibility fromHadoopText(@Nonnull final Text hadoopText) {
-        return new EntryVisibility(ByteSequence.fromHadoopText(hadoopText));
+        return new EntryVisibility(hadoopText);
     }
 
 
@@ -61,7 +76,7 @@ public final class EntryVisibility implements Serializable, Comparable<EntryVisi
      * @return a new {@code EntryVisibility}
      */
     public static EntryVisibility fromByteArray(@Nonnull final byte[] byteArray) {
-        return new EntryVisibility(ByteSequence.fromByteArray(byteArray));
+        return new EntryVisibility(byteArray);
     }
 
 
@@ -73,7 +88,7 @@ public final class EntryVisibility implements Serializable, Comparable<EntryVisi
      * @return a new {@code EntryVisibility}
      */
     public static EntryVisibility fromString(@Nonnull final String string) {
-        return new EntryVisibility(ByteSequence.fromString(string));
+        return new EntryVisibility(string);
     }
 
 
@@ -85,7 +100,7 @@ public final class EntryVisibility implements Serializable, Comparable<EntryVisi
      * @return a new {@code EntryVisibility} object.
      */
     public static EntryVisibility fromColumnVisiblity(@Nonnull final ColumnVisibility columnVisibility) {
-        return new EntryVisibility(ByteSequence.fromByteArray(columnVisibility.flatten()));
+        return new EntryVisibility(columnVisibility.flatten());
     }
 
 
@@ -102,51 +117,13 @@ public final class EntryVisibility implements Serializable, Comparable<EntryVisi
 
 
     /**
-     * Converts this {@code EntryVisibility} to a {@link ByteSequence}.
+     * Parses this value into an Accumulo {@code ColumnVisibility}.
      *
-     * @return the byte sequence underlying this entry.
+     * @return a new {@code ColumnVisibility}.
+     * @throws BadArgumentException if the expression is invalid.
      */
-    public ByteSequence toByteSequence() {
-        return byteSequence;
+    public ColumnVisibility toColumnVisibility() {
+        return new ColumnVisibility(toByteArray());
     }
 
-
-    /**
-     * Converts this {@code EntryVisibility} to a byte array.
-     *
-     * @return a new byte array.
-     */
-    public byte[] toByteArray() {
-        return byteSequence.toByteArray();
-    }
-
-
-    /**
-     * This returns the value of the bytes as if encoded as UTF-8 text.
-     */
-    @Override
-    public String toString() {
-        return byteSequence.toString();
-    }
-
-
-    @Override
-    public int compareTo(@Nonnull final EntryVisibility that) {
-        return this.byteSequence.compareTo(that.byteSequence);
-    }
-
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final EntryVisibility that = (EntryVisibility) o;
-        return this.byteSequence.equals(that.byteSequence);
-    }
-
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(byteSequence);
-    }
 }

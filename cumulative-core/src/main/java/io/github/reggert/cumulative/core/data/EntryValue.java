@@ -13,17 +13,36 @@ import static java.util.Objects.requireNonNull;
 /**
  * Immutable representation of an Accumulo value.
  */
-public final class EntryValue implements Serializable, Comparable<EntryValue> {
+public final class EntryValue extends ByteSequenceWrapper<EntryValue> {
     private static final long serialVersionUID = 1L;
     /**
      * An empty value.
      */
     public static final EntryValue EMPTY = new EntryValue(ByteSequence.EMPTY);
-    private final ByteSequence byteSequence;
 
 
     private EntryValue(@Nonnull final ByteSequence byteSequence) {
-        this.byteSequence = byteSequence;
+        super(byteSequence);
+    }
+
+
+    private EntryValue(@Nonnull Text hadoopText) {
+        super(hadoopText);
+    }
+
+
+    private EntryValue(@Nonnull Value accumuloValue) {
+        super(accumuloValue);
+    }
+
+
+    private EntryValue(@Nonnull String string) {
+        super(string);
+    }
+
+
+    private EntryValue(@Nonnull byte[] bytes) {
+        super(bytes);
     }
 
 
@@ -35,7 +54,7 @@ public final class EntryValue implements Serializable, Comparable<EntryValue> {
      * @return a new {@code EntryValue}
      */
     public static EntryValue fromByteSequence(@Nonnull final ByteSequence byteSequence) {
-        return new EntryValue(requireNonNull(byteSequence, "byteSequence"));
+        return new EntryValue(byteSequence);
     }
 
 
@@ -47,7 +66,7 @@ public final class EntryValue implements Serializable, Comparable<EntryValue> {
      * @return a new {@code EntryValue}
      */
     public static EntryValue fromHadoopText(@Nonnull final Text hadoopText) {
-        return new EntryValue(ByteSequence.fromHadoopText(hadoopText));
+        return new EntryValue(hadoopText);
     }
 
 
@@ -59,7 +78,7 @@ public final class EntryValue implements Serializable, Comparable<EntryValue> {
      * @return a new {@code EntryValue}
      */
     public static EntryValue fromByteArray(@Nonnull final byte[] byteArray) {
-        return new EntryValue(ByteSequence.fromByteArray(byteArray));
+        return new EntryValue(byteArray);
     }
 
 
@@ -71,7 +90,7 @@ public final class EntryValue implements Serializable, Comparable<EntryValue> {
      * @return a new {@code EntryValue}
      */
     public static EntryValue fromString(@Nonnull final String string) {
-        return new EntryValue(ByteSequence.fromString(string));
+        return new EntryValue(string);
     }
 
 
@@ -83,56 +102,7 @@ public final class EntryValue implements Serializable, Comparable<EntryValue> {
      * @return a new {@code EntryValue} object.
      */
     public static EntryValue fromAccumuloValue(@Nonnull final Value accumuloValue) {
-        return new EntryValue(ByteSequence.fromAccumuloValue(accumuloValue));
+        return new EntryValue(accumuloValue);
     }
 
-
-    /**
-     * Converts this {@code EntryValue} to a {@link ByteSequence}.
-     *
-     * @return the byte sequence underlying this entry.
-     */
-    public ByteSequence toByteSequence() {
-        return byteSequence;
-    }
-
-
-    /**
-     * Converts this {@code EntryValue} to a byte array.
-     *
-     * @return a new byte array.
-     */
-    public byte[] toByteArray() {
-        return byteSequence.toByteArray();
-    }
-
-
-    /**
-     * This returns the value of the bytes as if encoded as UTF-8 text.
-     */
-    @Override
-    public String toString() {
-        return byteSequence.toString();
-    }
-
-
-    @Override
-    public int compareTo(@Nonnull final EntryValue that) {
-        return this.byteSequence.compareTo(that.byteSequence);
-    }
-
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final EntryValue that = (EntryValue) o;
-        return this.byteSequence.equals(that.byteSequence);
-    }
-
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(byteSequence);
-    }
 }
