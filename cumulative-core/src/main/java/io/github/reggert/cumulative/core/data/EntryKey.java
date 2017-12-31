@@ -21,14 +21,12 @@ import static java.util.Objects.requireNonNull;
 public final class EntryKey implements Serializable, Comparable<EntryKey> {
     private static final long serialVersionUID = 1L;
     private final RowIdentifier rowIdentifier;
-    private final ColumnFamily columnFamily;
-    private final ColumnQualifier columnQualifier;
+    private final ColumnIdentifier columnIdentifier;
     private final EntryVisibility visibility;
     private final Timestamp timestamp;
     private static final Comparator<EntryKey> COMPARATOR =
         comparing(EntryKey::getRowIdentifier)
-        .thenComparing(EntryKey::getColumnFamily)
-        .thenComparing(EntryKey::getColumnQualifier)
+        .thenComparing(EntryKey::getColumnIdentifier)
         .thenComparing(EntryKey::getVisibility)
         .thenComparing(EntryKey::getTimestamp);
 
@@ -38,10 +36,8 @@ public final class EntryKey implements Serializable, Comparable<EntryKey> {
      *
      * @param rowIdentifier
      * the rowid.
-     * @param columnFamily
-     * the column family.
-     * @param columnQualifier
-     * the column qualifier.
+     * @param columnIdentifier
+     * the column key.
      * @param visibility
      * the visibility to apply to the entry.
      * @param timestamp
@@ -49,14 +45,12 @@ public final class EntryKey implements Serializable, Comparable<EntryKey> {
      */
     public EntryKey(
         @Nonnull final RowIdentifier rowIdentifier,
-        @Nonnull final ColumnFamily columnFamily,
-        @Nonnull final ColumnQualifier columnQualifier,
+        @Nonnull final ColumnIdentifier columnIdentifier,
         @Nonnull final EntryVisibility visibility,
         @Nonnull final Timestamp timestamp
     ) {
         this.rowIdentifier = requireNonNull(rowIdentifier, "rowIdentifier");
-        this.columnFamily = requireNonNull(columnFamily, "columnFamily");
-        this.columnQualifier = requireNonNull(columnQualifier, "columnQualifier");
+        this.columnIdentifier = requireNonNull(columnIdentifier, "columnIdentifier");
         this.visibility = requireNonNull(visibility, "visibility");
         this.timestamp = requireNonNull(timestamp, "timestamp");
     }
@@ -67,20 +61,17 @@ public final class EntryKey implements Serializable, Comparable<EntryKey> {
      *
      * @param rowIdentifier
      * the rowid.
-     * @param columnFamily
-     * the column family.
-     * @param columnQualifier
-     * the column qualifier.
+     * @param columnIdentifier
+     * the column key.
      * @param visibility
      * the visibility to apply to the entry.
      */
     public EntryKey(
         @Nonnull final RowIdentifier rowIdentifier,
-        @Nonnull final ColumnFamily columnFamily,
-        @Nonnull final ColumnQualifier columnQualifier,
+        @Nonnull final ColumnIdentifier columnIdentifier,
         @Nonnull final EntryVisibility visibility
     ) {
-        this(rowIdentifier, columnFamily, columnQualifier, visibility, Timestamp.UNSPECIFIED);
+        this(rowIdentifier, columnIdentifier, visibility, Timestamp.UNSPECIFIED);
     }
 
 
@@ -89,17 +80,14 @@ public final class EntryKey implements Serializable, Comparable<EntryKey> {
      *
      * @param rowIdentifier
      * the rowid.
-     * @param columnFamily
-     * the column family.
-     * @param columnQualifier
-     * the column qualifier.
+     * @param columnIdentifier
+     * the column key.
      */
     public EntryKey(
         @Nonnull final RowIdentifier rowIdentifier,
-        @Nonnull final ColumnFamily columnFamily,
-        @Nonnull final ColumnQualifier columnQualifier
+        @Nonnull final ColumnIdentifier columnIdentifier
     ) {
-        this(rowIdentifier, columnFamily, columnQualifier, EntryVisibility.DEFAULT);
+        this(rowIdentifier, columnIdentifier, EntryVisibility.DEFAULT);
     }
 
 
@@ -114,8 +102,7 @@ public final class EntryKey implements Serializable, Comparable<EntryKey> {
         requireNonNull(accumuloKey, "accumuloKey");
         return new EntryKey(
             RowIdentifier.fromAccumuloKey(accumuloKey),
-            ColumnFamily.fromAccumuloKey(accumuloKey),
-            ColumnQualifier.fromAccumuloKey(accumuloKey),
+            ColumnIdentifier.fromAccumuloKey(accumuloKey),
             EntryVisibility.fromAccumuloKey(accumuloKey),
             new Timestamp(accumuloKey.getTimestamp())
         );
@@ -130,8 +117,8 @@ public final class EntryKey implements Serializable, Comparable<EntryKey> {
     public Key toAccumuloKey() {
         return new Key(
             rowIdentifier.toByteArray(),
-            columnFamily.toByteArray(),
-            columnQualifier.toByteArray(),
+            columnIdentifier.getFamily().toByteArray(),
+            columnIdentifier.getQualifier().toByteArray(),
             visibility.toByteArray(),
             timestamp.longValue(),
             false,
@@ -150,18 +137,10 @@ public final class EntryKey implements Serializable, Comparable<EntryKey> {
 
 
     /**
-     * Returns the column family.
+     * Returns the column key.
      */
-    public ColumnFamily getColumnFamily() {
-        return columnFamily;
-    }
-
-
-    /**
-     * Returns the column qualifier.
-     */
-    public ColumnQualifier getColumnQualifier() {
-        return columnQualifier;
+    public ColumnIdentifier getColumnIdentifier() {
+        return columnIdentifier;
     }
 
 
@@ -193,8 +172,7 @@ public final class EntryKey implements Serializable, Comparable<EntryKey> {
         if (o == null || getClass() != o.getClass()) return false;
         final EntryKey that = (EntryKey) o;
         return Objects.equals(this.rowIdentifier, that.rowIdentifier) &&
-            Objects.equals(this.columnFamily, that.columnFamily) &&
-            Objects.equals(this.columnQualifier, that.columnQualifier) &&
+            Objects.equals(this.columnIdentifier, that.columnIdentifier) &&
             Objects.equals(this.visibility, that.visibility) &&
             Objects.equals(this.timestamp, that.timestamp);
     }
@@ -202,17 +180,16 @@ public final class EntryKey implements Serializable, Comparable<EntryKey> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(rowIdentifier, columnFamily, columnQualifier, visibility, timestamp);
+        return Objects.hash(rowIdentifier, columnIdentifier, visibility, timestamp);
     }
 
 
     @Override
     public String toString() {
         return String.format(
-            "EntryKey{rowIdentifier=%s, columnFamily=%s, columnQualifier=%s, visibility=%s, timestamp=%s}",
+            "EntryKey{rowIdentifier=%s, columnIdentifier=%s, visibility=%s, timestamp=%s}",
             rowIdentifier,
-            columnFamily,
-            columnQualifier,
+            columnIdentifier,
             visibility,
             timestamp
         );
