@@ -134,9 +134,9 @@ public final class ByteSequence implements Serializable, Comparable<ByteSequence
      */
     @Override
     public int compareTo(@Nonnull final ByteSequence that) {
-        int i = 0, j = 0;
-        while (i < this.bytes.length && j < that.bytes.length) {
-            final int cmp = (this.bytes[i] & 0xff) - (this.bytes[j] & 0xff);
+        int i = 0;
+        for (; i < this.bytes.length && i < that.bytes.length; i++) {
+            final int cmp = (this.bytes[i] & 0xff) - (that.bytes[i] & 0xff);
             if (cmp != 0) {
                 return cmp;
             }
@@ -144,7 +144,7 @@ public final class ByteSequence implements Serializable, Comparable<ByteSequence
         if (i < this.bytes.length) {
             return 1;
         }
-        if (j < this.bytes.length) {
+        if (i < that.bytes.length) {
             return -1;
         }
         return 0;
