@@ -44,7 +44,7 @@ public final class Timestamp implements Serializable, Comparable<Timestamp> {
      * a time from which to create a timestamp.
      * @return a new {@code Timestamp}.
      */
-    public Timestamp fromInstant(@Nonnull final Instant instant) {
+    public static Timestamp fromInstant(@Nonnull final Instant instant) {
         return new Timestamp(requireNonNull(instant, "instant").toEpochMilli());
     }
 
@@ -56,7 +56,7 @@ public final class Timestamp implements Serializable, Comparable<Timestamp> {
      * the key from which to extract the timestamp.
      * @return a new {@code Timestamp}
      */
-    public Timestamp fromAccumuloKey(@Nonnull final Key accumuloKey) {
+    public static Timestamp fromAccumuloKey(@Nonnull final Key accumuloKey) {
         return new Timestamp(accumuloKey.getTimestamp());
     }
 
