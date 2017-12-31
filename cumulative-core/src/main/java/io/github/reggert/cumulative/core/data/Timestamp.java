@@ -1,6 +1,8 @@
 package io.github.reggert.cumulative.core.data;
 
 
+import org.apache.accumulo.core.data.Key;
+
 import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.time.Instant;
@@ -44,6 +46,18 @@ public final class Timestamp implements Serializable, Comparable<Timestamp> {
      */
     public Timestamp fromInstant(@Nonnull final Instant instant) {
         return new Timestamp(requireNonNull(instant, "instant").toEpochMilli());
+    }
+
+
+    /**
+     * Constructs a {@code Timestamp} by extracting its value from an Accumulo {@code Key}.
+     *
+     * @param accumuloKey
+     * the key from which to extract the timestamp.
+     * @return a new {@code Timestamp}
+     */
+    public Timestamp fromAccumuloKey(@Nonnull final Key accumuloKey) {
+        return new Timestamp(accumuloKey.getTimestamp());
     }
 
 
