@@ -149,4 +149,35 @@ public final class ByteSequence implements Serializable, Comparable<ByteSequence
         }
         return 0;
     }
+
+
+    /**
+     * Access the byte at the specified location in the sequence.
+     *
+     * @param index
+     * zero-based index of the byte to access.
+     * @return the byte value.
+     * @throws IndexOutOfBoundsException if the index exceeds the end of the sequence.
+     */
+    public byte get(final int index) {
+        if (index >= bytes.length) {
+            throw new IndexOutOfBoundsException(String.format("index (%d) >= length (%d)", index, bytes.length));
+        }
+        return bytes[index];
+    }
+
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ByteSequence that = (ByteSequence) o;
+        return Arrays.equals(this.bytes, that.bytes);
+    }
+
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(bytes);
+    }
 }
