@@ -5,6 +5,7 @@ import org.apache.accumulo.core.data.Key;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
+import java.sql.Time;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -104,7 +105,7 @@ public final class EntryKey implements Serializable, Comparable<EntryKey> {
             RowIdentifier.fromAccumuloKey(accumuloKey),
             ColumnIdentifier.fromAccumuloKey(accumuloKey),
             EntryVisibility.fromAccumuloKey(accumuloKey),
-            new Timestamp(accumuloKey.getTimestamp())
+            Timestamp.fromAccumuloKey(accumuloKey)
         );
     }
 
