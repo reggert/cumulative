@@ -1,5 +1,7 @@
 package io.github.reggert.cumulative.core
 
+import java.time.Instant
+
 import org.apache.accumulo.core.security.ColumnVisibility
 import org.apache.accumulo.core.util.BadArgumentException
 
@@ -48,5 +50,66 @@ package object data {
   }
   object EntryVisibility extends ByteSeqWrapperFactory[EntryVisibility]
 
+  /**
+    * Immutable representation of an entire column id (family and qualifier).
+    * @param family major key.
+    * @param qualifier minor key.
+    */
+  final case class ColumnIdentifier(family : ColumnFamily, qualifier : ColumnQualifier)
+  object ColumnIdentifier {
+    implicit val columnIdentifierOrdering : Ordering[ColumnIdentifier] =
+      Ordering.by {id => (id.family, id.qualifier)}
+  }
+
+  /**
+    * Immutable representation of an Accumulo timestamp, which may represent either an actual time or a
+    * logical time, and may be left unspecified (e.g., when writing new entries).
+    */
+  sealed abstract class Timestamp extends Serializable {
+    /**
+      * Indicates whether the timestamp has a specified value.
+      */
+    def isSpecified : Boolean
+  }
+  object Timestamp {
+
+    /**
+      * Immutable representation of an Accumulo timestamp that has been specified.
+      * @param longValue numeric value of the timestamp, which may be either Unix time or a logical time.
+      */
+    final case class Specified(longValue : Long) extends Timestamp {
+      /**
+        * Converts this timestamp to an [[Instant]], assuming it does not represent a logical time.
+        * @return an Instant.
+        */
+      def toInstant = Instant.ofEpochMilli(longValue)
+
+      override def isSpecified: Boolean = true
+    }
+
+    /**
+      * Placeholder for a timestamp that has been left unspecified.
+      */
+    final case object Unspecified extends Timestamp {
+      override def isSpecified: Boolean = false
+    }
+
+    /**
+      * Constructs a timestamp from an [[Instant]].
+      * @param instant an Instant representing the time.
+      * @return a new specified timestamp.
+      */
+    def apply(instant : Instant) = Specified(instant.toEpochMilli)
+
+    /**
+      * Default ordering for timestamps. Note that unspecified timestamps sort higher than specified ones.
+      */
+    implicit val timestampOrdering : Ordering[Timestamp] = (x: Timestamp, y: Timestamp) => (x, y) match {
+      case (Specified(a), Specified(b)) => implicitly[Ordering[Long]].compare(a, b)
+      case (Unspecified, Specified(_)) => 1
+      case (Specified(_), Unspecified) => -1
+      case (Unspecified, Unspecified) => 0
+    }
+  }
 
 }
