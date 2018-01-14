@@ -18,6 +18,11 @@ sealed abstract class ScanRange extends Serializable {
 object ScanRange {
 
   /**
+    * Base class for `ScanRange` implementations that operate only on row boundaries.
+    */
+  sealed abstract class FullRow extends ScanRange
+
+  /**
     * Class to wrap a value to indicate that whether it is an inclusive or exclusive bound.
     * @tparam T the underlying type.
     */
@@ -47,7 +52,7 @@ object ScanRange {
   /**
     * Range representing a full table scan.
     */
-  case object FullTable extends ScanRange {
+  case object FullTable extends FullRow {
     override def toAccumuloRange: AccumuloRange = new AccumuloRange
   }
 
@@ -60,7 +65,7 @@ object ScanRange {
   final case class RowBounds(
     minimum : Bound[RowIdentifier],
     maximum : Bound[RowIdentifier]
-  ) extends ScanRange {
+  ) extends FullRow {
     override def toAccumuloRange: AccumuloRange = new AccumuloRange(
       minimum.value.toHadoopText,
       minimum.isInclusive,
@@ -74,7 +79,7 @@ object ScanRange {
     *
     * @param minimum starting row identifier.
     */
-  final case class MinimumRow(minimum : Bound[RowIdentifier]) extends ScanRange {
+  final case class MinimumRow(minimum : Bound[RowIdentifier]) extends FullRow {
     override def toAccumuloRange: AccumuloRange = new AccumuloRange(
       minimum.value.toHadoopText,
       minimum.isInclusive,
@@ -93,7 +98,7 @@ object ScanRange {
     *
     * @param maximum ending row identifier.
     */
-  final case class MaximumRow(maximum : Bound[RowIdentifier]) extends ScanRange {
+  final case class MaximumRow(maximum : Bound[RowIdentifier]) extends FullRow {
     override def toAccumuloRange: AccumuloRange = new AccumuloRange(
       null,
       false,
@@ -168,7 +173,7 @@ object ScanRange {
     *
     * @param rowPrefix the row prefix to match.
     */
-  final case class RowPrefix(rowPrefix : RowIdentifier) extends ScanRange {
+  final case class RowPrefix(rowPrefix : RowIdentifier) extends FullRow {
     override def toAccumuloRange: AccumuloRange = AccumuloRange.prefix(rowPrefix.toHadoopText)
   }
   object RowPrefix {
@@ -219,7 +224,7 @@ object ScanRange {
     *
     * @param row the row to match.
     */
-  final case class ExactRow(row : RowIdentifier) extends ScanRange {
+  final case class ExactRow(row : RowIdentifier) extends FullRow {
     override def toAccumuloRange: AccumuloRange = AccumuloRange.exact(row.toHadoopText)
   }
   object ExactRow {
