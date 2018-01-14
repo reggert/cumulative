@@ -1,6 +1,7 @@
 package io.github.reggert.cumulative.core.scan
 
 import io.github.reggert.cumulative.core.data.Entry
+import io.github.reggert.cumulative.core.scan.iterators.IteratorConfiguration
 import io.github.reggert.cumulative.core.{ConnectorProvider, TableName}
 import org.apache.accumulo.core.client.mapreduce.InputFormatBase
 import org.apache.accumulo.core.client.{Connector, IteratorSetting, ScannerBase}
@@ -72,7 +73,7 @@ object Scan {
     */
   def apply(
     tableName : TableName,
-    ranges : immutable.Set[ScanRange],
+    ranges : immutable.Set[_ <: ScanRange],
     iterators : immutable.Seq[IteratorConfiguration] = Nil
   ) (implicit
     connectorProvider : ConnectorProvider,
@@ -127,7 +128,7 @@ object Scan {
     */
   final class Batch(
     val tableName : TableName,
-    val ranges : immutable.Set[ScanRange],
+    val ranges : immutable.Set[_ <: ScanRange],
     val iterators : immutable.Seq[IteratorConfiguration] = Nil
   ) (
     implicit val connectorProvider : ConnectorProvider,

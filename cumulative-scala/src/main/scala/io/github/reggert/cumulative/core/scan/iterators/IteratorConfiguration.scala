@@ -1,6 +1,8 @@
-package io.github.reggert.cumulative.core.scan
+package io.github.reggert.cumulative.core.scan.iterators
 
 import org.apache.accumulo.core.client.IteratorSetting
+
+import scala.collection.JavaConverters._
 
 
 /**
@@ -9,7 +11,7 @@ import org.apache.accumulo.core.client.IteratorSetting
   * The main reason this class exists rather than using {@code IteratorSetting} directly to enable the priorities
   * to be automatically assigned at scan time.
   */
-abstract class IteratorConfiguration(
+final class IteratorConfiguration(
   val name : String,
   val iteratorClass : String,
   val options : Map[String, String] = Map.empty
@@ -20,5 +22,6 @@ abstract class IteratorConfiguration(
     * @param priority the priority to assign the iterator.
     * @return an Accumulo [[IteratorSetting]].
     */
-  def toIteratorSetting(priority : Int) : IteratorSetting
+  def toIteratorSetting(priority : Int) : IteratorSetting =
+    new IteratorSetting(priority, name, iteratorClass, options.asJava)
 }
