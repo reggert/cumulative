@@ -12,8 +12,8 @@ import org.apache.accumulo.core.data.Key
   */
 final case class EntryKey(
   row : RowIdentifier,
-  column : ColumnIdentifier,
-  visibility: EntryVisibility,
+  column : ColumnIdentifier = ColumnIdentifier(),
+  visibility: EntryVisibility = EntryVisibility(),
   timestamp : Timestamp = Timestamp.Unspecified
 ) {
   /**

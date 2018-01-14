@@ -1,8 +1,14 @@
 package io.github.reggert.cumulative.core.data
 
-import io.github.reggert.cumulative.core.data.Row.{ColumnEntry, ColumnMap}
+import java.io.IOException
+import java.util
 
-import scala.collection.{IterableView, immutable}
+import io.github.reggert.cumulative.core.data.Row.{ColumnEntry, ColumnMap}
+import org.apache.accumulo.core.data.{Key, Value}
+import org.apache.accumulo.core.iterators.user.WholeRowIterator
+
+import scala.collection.JavaConverters._
+import scala.collection.immutable
 
 
 /**
@@ -85,14 +91,61 @@ final case class Row(id : RowIdentifier, columns : ColumnMap) {
     * @return a new Row.
     */
   def :++ (entries : Traversable[Entry]) : Row = (this /: entries) {(r, e) => r :+ e}
+
+  /**
+    * Encodes the row as a single [[Entry]] using [[WholeRowIterator]].
+    *
+    * @return an entry whose value contains the encoded entries for this row.
+    */
+  def encoded : Entry = {
+    val kvPairs = entries.map(_.toAccumuloEntry).map(e => e.getKey -> e.getValue).toMap
+    val keys = new util.ArrayList[Key](kvPairs.keys.asJavaCollection)
+    val values = new util.ArrayList[Value](kvPairs.values.asJavaCollection)
+    val encodedValue = EntryValue(WholeRowIterator.encodeRow(keys, values))
+    Entry(EntryKey(id), encodedValue)
+  }
 }
 
 
 object Row {
+  /**
+    * Constructs a `Row` from a collection of entries.
+    *
+    * @param entries a non-empty collection of entries with the same rowid.
+    * @return a new `Row`.
+    * @throws IllegalArgumentException if the collection is emtpy or the rowids are not the same.
+    */
   def apply(entries : Traversable[Entry]) : Row = {
     require(entries.nonEmpty, "Cannot construct row from empty collection")
-    entries.map(entry => Row)
+    val firstEntry = entries.head
+    val initial = Row(
+      firstEntry.key.row,
+      immutable.TreeMap(
+        firstEntry.key.column.family -> immutable.TreeMap(
+          firstEntry.key.column.qualifier -> ColumnEntry(
+            firstEntry.value,
+            firstEntry.key.visibility,
+            firstEntry.key.timestamp
+          )
+        )
+      )
+    )
+    (initial /: entries.tail)(_ :+ _)
   }
+
+  /**
+    * Decodes an entry that has been encoded using [[WholeRowIterator]].
+    *
+    * @param entry a row that has been encoded into a single entry.
+    * @return the decoded row.
+    * @throws IOException if an error is encountered while decoding the row.
+    */
+  def decode(entry : Entry) : Row = Row(
+    WholeRowIterator.decodeRow(
+      entry.key.toAccumuloKey,
+      entry.value.toAccumuloValue
+    ).entrySet().asScala.view.map(Entry.apply)
+  )
 
   /**
     * Triple of the value, visibility, and timestamp associated with a column within a row.

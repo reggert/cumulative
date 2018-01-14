@@ -55,7 +55,10 @@ package object data {
     * @param family major key.
     * @param qualifier minor key.
     */
-  final case class ColumnIdentifier(family : ColumnFamily, qualifier : ColumnQualifier)
+  final case class ColumnIdentifier(
+    family : ColumnFamily = ColumnFamily(),
+    qualifier : ColumnQualifier = ColumnQualifier()
+  )
   object ColumnIdentifier {
     implicit val columnIdentifierOrdering : Ordering[ColumnIdentifier] =
       Ordering.by {id => (id.family, id.qualifier)}

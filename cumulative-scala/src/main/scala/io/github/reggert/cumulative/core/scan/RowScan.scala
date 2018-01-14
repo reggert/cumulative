@@ -4,22 +4,31 @@ import io.github.reggert.cumulative.core.data.Row
 import io.github.reggert.cumulative.core.scan.iterators.WholeRow
 import io.github.reggert.cumulative.core.{ConnectorProvider, TableName}
 import org.apache.accumulo.core.client.Connector
-import org.apache.accumulo.core.iterators.user.WholeRowIterator
+import org.apache.accumulo.core.client.mapred.AccumuloInputFormat
+import org.apache.hadoop.mapreduce.Job
 
 import scala.collection.immutable
 
 
 /**
-  * Base class for scans against entire Accumulo rows.
+  * Immutable scan against entire Accumulo rows.
   *
   * All scans extend the [[Traversable]] trait. Note that some operations on `Traversable` cause all elements
   * within the range to be read right away. When chaining operations, it is recommended to use the `view`
   * method to create a lazy view of the collection to avoid needlessly materializing the entire scan.
   */
 final class RowScan private(entryScan : Scan) extends Serializable with Traversable[Row] {
-  override def foreach[U](f: Row => U): Unit = entryScan.foreach {entry =>
-    WholeRowIterator.decodeRow(entry.key.toAccumuloKey, entry.value.toAccumuloValue)
-  }
+  override def foreach[U](f: Row => U): Unit = entryScan.foreach(Row.decode)
+
+  /**
+    * Configures a Hadoop job configuration for this scan for use with [[AccumuloInputFormat]].
+    *
+    * Note that the returned data will still need to be converted into instances of `Entry` and decoded using
+    * `Row.decode`.
+    *
+    * @param configuration Hadoop job configuration to which to apply settings.
+    */
+  def apply(configuration : Job) : Unit = entryScan(configuration)
 }
 
 

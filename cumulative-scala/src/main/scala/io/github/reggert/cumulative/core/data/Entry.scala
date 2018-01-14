@@ -24,6 +24,11 @@ final case class Entry(key : EntryKey, value : EntryValue) {
     new SimpleImmutableEntry(key.toAccumuloKey, value.toAccumuloValue)
 
   override def toString : String = DefaultFormatter.formatEntry(toAccumuloEntry, key.timestamp.isSpecified)
+
+  /**
+    * Converts this to a key-value pair.
+    */
+  def toPair : (EntryKey, EntryValue) = key -> value
 }
 
 
@@ -31,8 +36,16 @@ object Entry {
   /**
     * Constructs an entry from a [[util.Map.Entry]] containing an Accumulo [[Key]] and [[Value]].
     * @param entry the entry to convert.
-    * @return a new Entry.
+    * @return a new `Entry`.
     */
   def apply(entry : util.Map.Entry[Key, Value]) : Entry =
     Entry(EntryKey(entry.getKey), EntryValue(entry.getValue))
+
+  /**
+    * Constructs an entry from a key-value pair.
+    *
+    * @param kvPair a pair of [[EntryKey]] and [[EntryValue]].
+    * @return a new `Entry`.
+    */
+  def apply(kvPair : (EntryKey, EntryValue)) : Entry = Entry(kvPair._1, kvPair._2)
 }
