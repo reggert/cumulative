@@ -68,7 +68,7 @@ object Scan {
   ) (implicit
     connectorProvider : ConnectorProvider,
     scannerSettings : ScannerSettings.Simple = ScannerSettings.Simple()
-  ) = new Simple(tableName, range, iterators)
+  ) : Scan = new Simple(tableName, range, iterators)
 
   /**
     * Constructs a multi-range unordered scan.
@@ -87,7 +87,7 @@ object Scan {
   ) (implicit
     connectorProvider : ConnectorProvider,
     scannerSettings : ScannerSettings.Batch = ScannerSettings.Batch()
-  ) = new Batch(tableName, ranges, iterators)
+  ) : Scan = new Batch(tableName, ranges, iterators)
 
 
   /**
