@@ -44,11 +44,12 @@ object RowScan {
     */
   def apply(
     tableName : TableName,
-    range : ScanRange.WholeRow = ScanRange.FullTable
+    range : ScanRange.WholeRow = ScanRange.FullTable,
+    columns : immutable.Set[ColumnSelector] = Set.empty
   ) (implicit
     connectorProvider : ConnectorProvider,
     scannerSettings : ScannerSettings.Simple = ScannerSettings.Simple()
-  ) : RowScan = new RowScan(Scan(tableName, range, List(WholeRow())))
+  ) : RowScan = new RowScan(Scan(tableName, range, List(WholeRow()), columns))
 
   /**
     * Constructs a multi-range unordered scan.
@@ -61,9 +62,10 @@ object RowScan {
     */
   def apply(
     tableName : TableName,
-    ranges : immutable.Set[_ <: ScanRange.WholeRow]
+    ranges : immutable.Set[_ <: ScanRange.WholeRow],
+    columns : immutable.Set[ColumnSelector] = Set.empty
   ) (implicit
     connectorProvider : ConnectorProvider,
     scannerSettings : ScannerSettings.Batch = ScannerSettings.Batch()
-  ) = Scan(tableName, ranges, List(WholeRow()))
+  ) = Scan(tableName, ranges, List(WholeRow()), columns)
 }

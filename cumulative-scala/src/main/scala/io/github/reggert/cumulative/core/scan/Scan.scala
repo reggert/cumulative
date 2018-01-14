@@ -64,11 +64,12 @@ object Scan {
   def apply(
     tableName : TableName,
     range : ScanRange = ScanRange.FullTable,
-    iterators : immutable.Seq[IteratorConfiguration] = Nil
+    iterators : immutable.Seq[IteratorConfiguration] = Nil,
+    columns : immutable.Set[ColumnSelector] = Set.empty
   ) (implicit
     connectorProvider : ConnectorProvider,
     scannerSettings : ScannerSettings.Simple = ScannerSettings.Simple()
-  ) : Scan = new Simple(tableName, range, iterators)
+  ) : Scan = new Simple(tableName, range, iterators, columns)
 
   /**
     * Constructs a multi-range unordered scan.
@@ -83,11 +84,12 @@ object Scan {
   def apply(
     tableName : TableName,
     ranges : immutable.Set[_ <: ScanRange],
-    iterators : immutable.Seq[IteratorConfiguration] = Nil
+    iterators : immutable.Seq[IteratorConfiguration] = Nil,
+    columns : immutable.Set[ColumnSelector] = Set.empty
   ) (implicit
     connectorProvider : ConnectorProvider,
     scannerSettings : ScannerSettings.Batch = ScannerSettings.Batch()
-  ) : Scan = new Batch(tableName, ranges, iterators)
+  ) : Scan = new Batch(tableName, ranges, iterators, columns)
 
 
   /**
@@ -102,15 +104,20 @@ object Scan {
   final class Simple(
     val tableName : TableName,
     val range : ScanRange = ScanRange.FullTable,
-    val iterators : immutable.Seq[IteratorConfiguration] = Nil
+    val iterators : immutable.Seq[IteratorConfiguration],
+    val columns : immutable.Set[ColumnSelector]
   )(
     implicit val connectorProvider : ConnectorProvider,
-    implicit val scannerSettings : ScannerSettings.Simple = ScannerSettings.Simple()
+    implicit val scannerSettings : ScannerSettings.Simple
   ) extends Scan {
     override protected def createScanner(): ScannerBase = {
       val connector = connectorProvider.connector
       val scanner = connector.createScanner(tableName.toString, scannerSettings.authorizations)
       scannerSettings(scanner)
+      columns.foreach {
+        case ColumnSelector(cf, Some(cq)) => scanner.fetchColumn(cf.toHadoopText, cq.toHadoopText)
+        case ColumnSelector(cf, _) => scanner.fetchColumnFamily(cf.toHadoopText)
+      }
       iteratorSettings.foreach(scanner.addScanIterator)
       scanner
     }
@@ -138,10 +145,11 @@ object Scan {
   final class Batch(
     val tableName : TableName,
     val ranges : immutable.Set[_ <: ScanRange],
-    val iterators : immutable.Seq[IteratorConfiguration] = Nil
+    val iterators : immutable.Seq[IteratorConfiguration],
+    val columns : immutable.Set[ColumnSelector]
   ) (
     implicit val connectorProvider : ConnectorProvider,
-    implicit val scannerSettings : ScannerSettings.Batch = ScannerSettings.Batch()
+    implicit val scannerSettings : ScannerSettings.Batch
   ) extends Scan {
     override protected def createScanner(): ScannerBase = {
       val connector = connectorProvider.connector
@@ -152,6 +160,10 @@ object Scan {
       )
       scannerSettings(scanner)
       iteratorSettings.foreach(scanner.addScanIterator)
+      columns.foreach {
+        case ColumnSelector(cf, Some(cq)) => scanner.fetchColumn(cf.toHadoopText, cq.toHadoopText)
+        case ColumnSelector(cf, _) => scanner.fetchColumnFamily(cf.toHadoopText)
+      }
       scanner
     }
 
