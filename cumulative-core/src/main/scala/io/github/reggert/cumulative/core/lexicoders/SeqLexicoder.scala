@@ -8,6 +8,9 @@ import scala.collection.JavaConverters._
 import scala.language.higherKinds
 
 
+/**
+  * Lexicoder for collections that extend [[Seq]].
+  */
 object SeqLexicoder {
   def apply[A, C[_] <: Seq[_]](implicit
     lex : Lexicoder[A],
