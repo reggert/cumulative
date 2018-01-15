@@ -1,7 +1,7 @@
 package io.github.reggert.cumulative.core.mutate
 
 import io.github.reggert.cumulative.core.data._
-import org.apache.accumulo.core.data.Mutation
+import org.apache.accumulo.core.data.{ConditionalMutation, Mutation}
 
 import scala.collection.immutable
 
@@ -12,8 +12,42 @@ import scala.collection.immutable
   * @param row the identifier of the row to which the changes apply.
   * @param changes the per-entry changes to be applied.
   */
-final case class RowMutation(row : RowIdentifier, changes : immutable.Seq[EntryChange]) {
-  def toAccumuloMutation : Mutation = (new Mutation(row.toArray) /: changes) {(m, c) => c(m); m}
+final case class RowMutation(
+  row : RowIdentifier,
+  changes : immutable.Seq[EntryChange]
+) {
+  /**
+    * Creates an Accumulo [[Mutation]] object from this object.
+    * @return a new [[Mutation]].
+    */
+  def toAccumuloMutation : Mutation = {
+    val mutation = new Mutation(row.toArray)
+    changes.foreach(_(mutation))
+    mutation
+  }
+}
+
+
+/**
+  * Immutable representation of a set of changes to be applied atomically to a row if certain conditions
+  * are met.
+  *
+  * @param unconditional the unconditional mutation to apply.
+  * @param conditions the conditions to apply to the mutation.
+  */
+final case class ConditionalRowMutation(
+  unconditional : RowMutation,
+  conditions : immutable.Seq[WriteCondition]
+) {
+  /**
+    * Creates an Accumulo [[ConditionalMutation]] object from this object.
+    * @return a new [[ConditionalMutation]].
+    */
+  def toAccumuloMutation : ConditionalMutation = {
+    val mutation = new ConditionalMutation(unconditional.row.toArray, conditions.map(_.toAccumuloCondition) : _*)
+    unconditional.changes.foreach(_(mutation))
+    mutation
+  }
 }
 
 
