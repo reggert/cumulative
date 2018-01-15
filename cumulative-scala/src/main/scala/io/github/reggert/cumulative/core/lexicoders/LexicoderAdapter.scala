@@ -7,9 +7,7 @@ import org.apache.accumulo.core.client.lexicoder.Lexicoder
   * Adapter that implements a [[Lexicoder]] for a type that can be converted to and from another type for
   * which a `Lexicoder` already exists.
   */
-abstract class LexicoderAdapter[A, B : Lexicoder] extends Lexicoder[A] {
-  private def delegate = implicitly[Lexicoder[B]]
-
+abstract class LexicoderAdapter[A, B](implicit delegate : Lexicoder[B]) extends Lexicoder[A] {
   override final def encode(value : A): Array[Byte] = delegate.encode(mapForward(value))
 
   override final def decode(bytes : Array[Byte]): A = mapBackward(delegate.decode(bytes))
