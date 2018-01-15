@@ -22,8 +22,8 @@ lazy val accumuloCore = (
 lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
 
 
-lazy val core = (project in file("cumulative-scala")).settings(
-  name := "cumulative-scala",
+lazy val core = (project in file("cumulative-core")).settings(
+  name := "cumulative-core",
   autoScalaLibrary := true,
   libraryDependencies := Seq(
     accumuloCore,
