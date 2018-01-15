@@ -1,24 +1,15 @@
 package io.github.reggert.cumulative.core.lexicoders
 
-import java.lang
 import java.time.Instant
 
-import org.apache.accumulo.core.client.lexicoder.{IntegerLexicoder, Lexicoder, LongLexicoder}
+import io.github.reggert.cumulative.core.lexicoders.BasicImplicits._
+import io.github.reggert.cumulative.core.lexicoders.GenericImplicits._
 
 
 /**
   * Lexicoder for [[Instant]]. Records with full nanosecond precision.
   */
-object InstantLexicoder{
-  private implicit val longLexicoder = new LongLexicoder
-  private implicit val integerLexicoder = new IntegerLexicoder
-  private implicit val pairLexicoder = new Tuple2Lexicoder[java.lang.Long, java.lang.Integer]()
-
-  /**
-    * Creates a new instance of this lexicoder.
-    */
-  def apply() : Lexicoder[Instant] = LexicoderAdapter[Instant, (java.lang.Long, java.lang.Integer)](
-    forward = (a: Instant) => (a.getEpochSecond, a.getNano),
-    backward = (b: (lang.Long, Integer)) => Instant.ofEpochSecond(b._1, b._2.longValue())
-  )
+object InstantLexicoder extends LexicoderAdapter[Instant, (Long, Int)] {
+  override def mapForward(a: Instant): (Long, Int) = (a.getEpochSecond, a.getNano)
+  override def mapBackward(b: (Long, Int)): Instant = Instant.ofEpochSecond(b._1, b._2.longValue())
 }
