@@ -114,10 +114,7 @@ object Scan {
       val connector = connectorProvider.connector
       val scanner = connector.createScanner(tableName.toString, scannerSettings.authorizations)
       scannerSettings(scanner)
-      columns.foreach {
-        case ColumnSelector(cf, Some(cq)) => scanner.fetchColumn(cf.toHadoopText, cq.toHadoopText)
-        case ColumnSelector(cf, _) => scanner.fetchColumnFamily(cf.toHadoopText)
-      }
+      columns.foreach(_(scanner))
       iteratorSettings.foreach(scanner.addScanIterator)
       scanner
     }
@@ -160,10 +157,7 @@ object Scan {
       )
       scannerSettings(scanner)
       iteratorSettings.foreach(scanner.addScanIterator)
-      columns.foreach {
-        case ColumnSelector(cf, Some(cq)) => scanner.fetchColumn(cf.toHadoopText, cq.toHadoopText)
-        case ColumnSelector(cf, _) => scanner.fetchColumnFamily(cf.toHadoopText)
-      }
+      columns.foreach(_(scanner))
       scanner
     }
 
