@@ -10,6 +10,7 @@ import org.apache.hadoop.io.Text
 
 import scala.collection.immutable
 import scala.util.Try
+import scala.math.Ordering.Implicits._
 
 
 /**
@@ -79,7 +80,7 @@ object ByteSeqWrapper {
   val UTF8: Charset = Charset.forName("UTF-8")
 
   implicit def byteSeqWrapperOrdering[T <: ByteSeqWrapper] : Ordering[T] =
-    Ordering.by(_.bytes.view.map(_ & 0xff))
+    Ordering.by(_.bytes.view.map(_ & 0xff).toSeq)
 
   private final case class Simple(bytes : immutable.IndexedSeq[Byte]) extends ByteSeqWrapper
 }

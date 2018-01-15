@@ -30,20 +30,20 @@ object ScanRange {
     def value : T
     def isInclusive : Boolean
   }
-  final case class Inclusive[T](value : T) extends Bound {
+  final case class Inclusive[T](value : T) extends Bound[T] {
     override def isInclusive: Boolean = true
   }
-  final case class Exclusive[T](value : T) extends Bound {
+  final case class Exclusive[T](value : T) extends Bound[T] {
     override def isInclusive: Boolean = false
   }
   object Bound {
     def minimumBoundOrdering[T : Ordering] : Ordering[Bound[T]] =
-      Ordering.by {
+      Ordering.by[Bound[T], (T, Int)] {
         case Inclusive(x : T) => (x, 0)
         case Exclusive(x : T) => (x, 1)
       }
     def maximumBoundOrdering[T : Ordering] : Ordering[Bound[T]] =
-      Ordering.by {
+      Ordering.by[Bound[T], (T, Int)] {
         case Inclusive(x : T) => (x, 1)
         case Exclusive(x : T) => (x, 0)
       }

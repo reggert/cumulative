@@ -46,7 +46,7 @@ final case class Row(id : RowIdentifier, columns : ColumnMap) {
     copy(
       columns = (this.columns /: that.columns) {(fm1, fe) =>
         val (f, qm2) = fe
-        val qm1 = fm1.getOrElse(f, immutable.SortedMap.empty)
+        val qm1 = fm1.getOrElse(f, immutable.SortedMap.empty[ColumnQualifier, ColumnEntry])
         fm1.updated(
           f,
           (qm1 /: qm2) {(qm, qe) =>
@@ -75,7 +75,7 @@ final case class Row(id : RowIdentifier, columns : ColumnMap) {
         entry.key.column.family,
         columns.getOrElse(
           entry.key.column.family,
-          immutable.SortedMap.empty
+          immutable.SortedMap.empty[ColumnQualifier, ColumnEntry]
         ).updated(
           entry.key.column.qualifier,
           ColumnEntry(entry.value, entry.key.visibility, entry.key.timestamp)

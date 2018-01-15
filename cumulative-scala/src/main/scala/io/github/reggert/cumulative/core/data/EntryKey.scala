@@ -50,4 +50,7 @@ object EntryKey {
       timestamp
     )
   }
+
+  implicit val entryKeyOrdering : Ordering[EntryKey] =
+    Ordering.by(k => (k.row, k.column, k.visibility, k.timestamp))
 }

@@ -42,14 +42,14 @@ object RowScan {
     * @param scannerSettings scanner settings.
     * @return a new simple row scan.
     */
-  def apply(
+  def Simple(
     tableName : TableName,
     range : ScanRange.WholeRow = ScanRange.FullTable,
     columns : immutable.Set[ColumnSelector] = Set.empty
   ) (implicit
     connectorProvider : ConnectorProvider,
     scannerSettings : ScannerSettings.Simple = ScannerSettings.Simple()
-  ) : RowScan = new RowScan(Scan(tableName, range, List(WholeRow()), columns))
+  ) : RowScan = new RowScan(Scan.Simple(tableName, range, List(WholeRow()), columns))
 
   /**
     * Constructs a multi-range unordered scan.
@@ -60,12 +60,12 @@ object RowScan {
     * @param scannerSettings scanner settings.
     * @return a new batch scan.
     */
-  def apply(
+  def Batch(
     tableName : TableName,
     ranges : immutable.Set[_ <: ScanRange.WholeRow],
     columns : immutable.Set[ColumnSelector] = Set.empty
   ) (implicit
     connectorProvider : ConnectorProvider,
     scannerSettings : ScannerSettings.Batch = ScannerSettings.Batch()
-  ) = Scan(tableName, ranges, List(WholeRow()), columns)
+  ) : RowScan = new RowScan(Scan.Batch(tableName, ranges, List(WholeRow()), columns))
 }
