@@ -33,3 +33,14 @@ lazy val core = (project in file("cumulative-core")).settings(
   crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.4")
 )
 
+lazy val model = (project in file("cumulative-model")).settings(
+  name := "cumulative-model",
+  autoScalaLibrary := true,
+  libraryDependencies := Seq(
+    accumuloCore,
+    scalaTest,
+    "org.scala-lang" % "scala-library" % scalaVersion.value % Compile
+  ),
+  crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.4")
+).dependsOn(core)
+
