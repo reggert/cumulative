@@ -1,7 +1,7 @@
 package io.github.reggert.cumulative.model
 
 import io.github.reggert.cumulative.core.data.{Entry, Row}
-import io.github.reggert.cumulative.core.scan.ColumnSelector
+import io.github.reggert.cumulative.core.scan.{ColumnSelector, ScanRange}
 
 import scala.collection.immutable
 
@@ -11,8 +11,9 @@ import scala.collection.immutable
   *
   * @tparam D the domain object type.
   * @tparam R the raw Accumulo type (either [[Entry]] or ([[Row]])
+  * @tparam B the base type of scan ranges allowed by this model.
   */
-trait RecordModel[D, R] {
+sealed trait RecordModel[D, R, B <: ScanRange] extends Serializable {
   /**
     * Converts an application domain object into its raw Accumulo representation.
     *
@@ -38,6 +39,25 @@ trait RecordModel[D, R] {
     *         be included.
     */
   def columnSelectors : immutable.Set[ColumnSelector] = Set.empty
+
+  /**
+    * Base class for defining domain-specific range types that map into [[ScanRange]]s.
+    */
+  abstract class RecordRange extends Serializable {
+    /**
+      * Converts this domain-specific range into a raw [[ScanRange]].
+      *
+      * @return a `ScanRange` corresponding to the domain range that this object represents.
+      */
+    def toScanRange : B
+  }
+
+  /**
+    * Domain-specific equivalent of [[ScanRange.FullTable]].
+    */
+  object FullTable extends RecordRange {
+    override def toScanRange: B = ScanRange.FullTable.asInstanceOf[B]
+  }
 }
 
 
@@ -47,7 +67,7 @@ trait RecordModel[D, R] {
   *
   * @tparam D the domain object type.
   */
-trait EntryModel[D] extends RecordModel[D, Entry]
+trait EntryModel[D] extends RecordModel[D, Entry, ScanRange]
 
 
 /**
@@ -56,4 +76,4 @@ trait EntryModel[D] extends RecordModel[D, Entry]
   *
   * @tparam D the domain object type.
   */
-trait RowModel[D] extends RecordModel[D, Row]
+trait RowModel[D] extends RecordModel[D, Row, ScanRange.WholeRow]
