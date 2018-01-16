@@ -29,7 +29,7 @@ import scala.util.Try
   * @tparam R the raw Accumulo type (either [[Entry]] or ([[Row]])
   * @tparam B the base type of scan ranges allowed by the model.
   */
-sealed abstract class ModelScanner[D, R, B <: ScanRange](
+sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
   model : RecordModel[D, R, B],
   tableName : TableName
 )(implicit connectorProvider: ConnectorProvider) extends Serializable {
