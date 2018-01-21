@@ -2,8 +2,7 @@ package io.github.reggert.cumulative.core.scan
 
 import io.github.reggert.cumulative.core.data.Entry
 import io.github.reggert.cumulative.core.scan.iterators.IteratorConfiguration
-import io.github.reggert.cumulative.core.{ConnectorProvider, TableName}
-import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat
+import io.github.reggert.cumulative.core.{ConnectorProvider, HadoopJobConfigurer, TableName}
 import org.apache.accumulo.core.client.mapreduce.InputFormatBase
 import org.apache.accumulo.core.client.{Connector, IteratorSetting, ScannerBase}
 import org.apache.hadoop.mapreduce.Job
@@ -19,21 +18,12 @@ import scala.collection.immutable
   * within the range to be read right away. When chaining operations, it is recommended to use the `view`
   * method to create a lazy view of the collection to avoid needlessly materializing the entire scan.
   */
-sealed abstract class Scan extends Serializable with Traversable[Entry] {
+sealed abstract class Scan extends HadoopJobConfigurer with Traversable[Entry] {
   protected def createScanner() : ScannerBase
   def tableName : TableName
   def iterators : immutable.Seq[IteratorConfiguration]
   def connectorProvider : ConnectorProvider
   def scannerSettings : ScannerSettings
-
-  /**
-    * Configures a Hadoop job configuration for this scan for use with [[AccumuloInputFormat]].
-    *
-    * Note that the returned data will still need to be converted into instances of `Entry`.
-    *
-    * @param configuration Hadoop job configuration to which to apply settings.
-    */
-  def configure(configuration : Job) : Unit
 
   final def iteratorSettings : Iterable[IteratorSetting] =
     iterators.view.zipWithIndex.map { case (ic, p) => ic.toIteratorSetting(p) }

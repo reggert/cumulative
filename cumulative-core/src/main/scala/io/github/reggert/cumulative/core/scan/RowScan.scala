@@ -2,7 +2,7 @@ package io.github.reggert.cumulative.core.scan
 
 import io.github.reggert.cumulative.core.data.Row
 import io.github.reggert.cumulative.core.scan.iterators.WholeRow
-import io.github.reggert.cumulative.core.{ConnectorProvider, TableName}
+import io.github.reggert.cumulative.core.{ConnectorProvider, HadoopJobConfigurer, TableName}
 import org.apache.accumulo.core.client.Connector
 import org.apache.accumulo.core.client.mapred.AccumuloInputFormat
 import org.apache.hadoop.mapreduce.Job
@@ -17,7 +17,7 @@ import scala.collection.immutable
   * within the range to be read right away. When chaining operations, it is recommended to use the `view`
   * method to create a lazy view of the collection to avoid needlessly materializing the entire scan.
   */
-final class RowScan private(entryScan : Scan) extends Serializable with Traversable[Row] {
+final class RowScan private(entryScan : Scan) extends HadoopJobConfigurer with Traversable[Row] {
   override def foreach[U](f: Row => U): Unit = entryScan.foreach(Row.decode)
 
   /**
@@ -28,7 +28,7 @@ final class RowScan private(entryScan : Scan) extends Serializable with Traversa
     *
     * @param configuration Hadoop job configuration to which to apply settings.
     */
-  def configure(configuration : Job) : Unit = entryScan.configure(configuration)
+  override def configure(configuration : Job) : Unit = entryScan.configure(configuration)
 }
 
 

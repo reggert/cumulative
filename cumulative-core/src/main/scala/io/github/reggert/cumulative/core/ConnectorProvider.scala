@@ -11,18 +11,11 @@ import org.apache.hadoop.mapreduce.Job
   * This is needed in order to guarantee that a connector can be obtained in a distributed context, e.g.,
   * Apache Spark.
   */
-trait ConnectorProvider extends Serializable {
+trait ConnectorProvider extends HadoopJobConfigurer  {
   /**
     * Returns an Accumulo [[Connector]] suitable for use in the local JVM.
     */
   def connector : Connector
-
-  /**
-    * Applies the connector settings to the specified Hadoop job configuration.
-    *
-    * @param configuration Hadoop job configuration to which to apply settings.
-    */
-  def configure(configuration : Job) : Unit
 }
 
 
