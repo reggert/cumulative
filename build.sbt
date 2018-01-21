@@ -8,7 +8,7 @@ scalaVersion in ThisBuild := "2.12.4"
 
 javacOptions in ThisBuild ++= Seq("-source", "1.8", "-target", "1.8")
 
-scalacOptions in ThisBuild += "-target:jvm-1.8"
+scalacOptions in ThisBuild ++= Seq("-target:jvm-1.8", "-deprecation", "-feature")
 
 lazy val accumuloVersion = "1.8.1"
 
