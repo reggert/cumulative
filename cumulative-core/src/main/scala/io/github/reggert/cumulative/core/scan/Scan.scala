@@ -33,7 +33,7 @@ sealed abstract class Scan extends Serializable with Traversable[Entry] {
     *
     * @param configuration Hadoop job configuration to which to apply settings.
     */
-  def apply(configuration : Job) : Unit
+  def configure(configuration : Job) : Unit
 
   final def iteratorSettings : Iterable[IteratorSetting] =
     iterators.view.zipWithIndex.map { case (ic, p) => ic.toIteratorSetting(p) }
@@ -79,7 +79,7 @@ object Scan {
       scanner
     }
 
-    override def apply(configuration : Job) : Unit = {
+    override def configure(configuration : Job) : Unit = {
       connectorProvider.configure(configuration)
       scannerSettings(configuration)
       InputFormatBase.setInputTableName(configuration, tableName.toString)
@@ -144,7 +144,7 @@ object Scan {
       scanner
     }
 
-    override def apply(configuration : Job) : Unit = {
+    override def configure(configuration : Job) : Unit = {
       connectorProvider.configure(configuration)
       scannerSettings(configuration)
       InputFormatBase.setInputTableName(configuration, tableName.toString)
