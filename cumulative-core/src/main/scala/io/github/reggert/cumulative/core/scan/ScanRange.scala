@@ -39,13 +39,13 @@ object ScanRange {
   object Bound {
     def minimumBoundOrdering[T : Ordering] : Ordering[Bound[T]] =
       Ordering.by[Bound[T], (T, Int)] {
-        case Inclusive(x : T) => (x, 0)
-        case Exclusive(x : T) => (x, 1)
+        case Inclusive(x) => (x, 0)
+        case Exclusive(x) => (x, 1)
       }
     def maximumBoundOrdering[T : Ordering] : Ordering[Bound[T]] =
       Ordering.by[Bound[T], (T, Int)] {
-        case Inclusive(x : T) => (x, 1)
-        case Exclusive(x : T) => (x, 0)
+        case Inclusive(x) => (x, 1)
+        case Exclusive(x) => (x, 0)
       }
   }
 

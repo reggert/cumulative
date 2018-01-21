@@ -4,6 +4,8 @@ import org.apache.accumulo.core.client.lexicoder.Lexicoder
 
 import scala.collection.generic.CanBuildFrom
 
+import scala.language.higherKinds
+
 
 /**
   * Implicit lexicoders for generic types. These typically rely on lexicoders for other types.

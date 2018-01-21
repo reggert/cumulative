@@ -30,8 +30,8 @@ import scala.util.Try
   * @tparam B the base type of scan ranges allowed by the model.
   */
 sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
-  model : RecordModel[D, R, B],
-  tableName : TableName
+  val model : RecordModel[D, R, B],
+  val tableName : TableName
 )(implicit connectorProvider: ConnectorProvider) extends Serializable {
   /**
     * Scans the specified range of records and returns them.
@@ -42,9 +42,9 @@ sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
     * @param scannerSettings settings to pass to the underlying raw scanner.
     * @return a lazy collection of records returned from Accumulo.
     */
-  final def apply(range : model.RecordRange = model.FullTable)
-    (implicit scannerSettings: ScannerSettings = ScannerSettings()) : Traversable[D] =
-    tryApply(range).map {case (_, d) => d.get}
+  final def scan(range : model.RecordRange = model.FullTable)
+    (implicit scannerSettings: ScannerSettings.Simple = ScannerSettings.Simple()) : Traversable[D] =
+    tryScan(range).map {case (_, d) => d.get}
 
   /**
     * Scans the specified ranges of records and returns them.
@@ -55,9 +55,9 @@ sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
     * @param scannerSettings settings to pass to the underlying raw scanner.
     * @return a lazy collection of records returned from Accumulo.
     */
-  final def apply(ranges : immutable.Set[model.RecordRange])
-    (implicit scannerSettings: ScannerSettings = ScannerSettings()) : Traversable[D] =
-    tryApply(ranges).map {case (_, d) => d.get}
+  final def scanBatch(ranges : immutable.Set[model.RecordRange])
+    (implicit scannerSettings: ScannerSettings.Batch = ScannerSettings.Batch()) : Traversable[D] =
+    tryScanBatch(ranges).map {case (_, d) => d.get}
 
   /**
     * Scans the specified range of records and returns the results of translating them along with the raw
@@ -68,7 +68,7 @@ sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
     * @return a lazy collection of pairs, where the left side of each pair is the raw datum returned from
     *         Accumulo, and the right side is the result of attempting to translate it into a domain record.
     */
-  final def tryApply(range : model.RecordRange = model.FullTable)
+  final def tryScan(range : model.RecordRange = model.FullTable)
     (implicit scannerSettings: ScannerSettings.Simple = ScannerSettings.Simple()) : Traversable[(R, Try[D])] =
     rawScan(range.toScanRange).view.map {raw => raw -> Try(model.domainFromRaw(raw))}
 
@@ -81,7 +81,7 @@ sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
     * @return a lazy collection of pairs, where the left side of each pair is the raw datum returned from
     *         Accumulo, and the right side is the result of attempting to translate it into a domain record.
     */
-  final def tryApply(ranges : immutable.Set[model.RecordRange])
+  final def tryScanBatch(ranges : immutable.Set[model.RecordRange])
     (implicit scannerSettings: ScannerSettings.Batch = ScannerSettings.Batch()) : Traversable[(R, Try[D])] =
     rawScan(ranges.map(_.toScanRange)).view.map {raw => raw -> Try(model.domainFromRaw(raw))}
 
