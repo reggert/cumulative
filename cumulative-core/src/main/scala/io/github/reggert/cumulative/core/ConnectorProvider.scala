@@ -22,7 +22,7 @@ trait ConnectorProvider extends Serializable {
     *
     * @param configuration Hadoop job configuration to which to apply settings.
     */
-  def apply(configuration : Job) : Unit
+  def configure(configuration : Job) : Unit
 }
 
 
@@ -100,7 +100,7 @@ class ZookeeperConnectorProvider(
   @transient lazy val connector : Connector =
     instance.getConnector(principal, authenticationTokenProvider.authenticationToken)
 
-  override def apply(configuration: Job): Unit = {
+  override def configure(configuration: Job): Unit = {
     AbstractInputFormat.setConnectorInfo(
       configuration,
       principal,

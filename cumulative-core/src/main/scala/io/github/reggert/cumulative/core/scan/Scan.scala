@@ -80,7 +80,7 @@ object Scan {
     }
 
     override def apply(configuration : Job) : Unit = {
-      connectorProvider(configuration)
+      connectorProvider.configure(configuration)
       scannerSettings(configuration)
       InputFormatBase.setInputTableName(configuration, tableName.toString)
       InputFormatBase.setBatchScan(configuration, false)
@@ -145,7 +145,7 @@ object Scan {
     }
 
     override def apply(configuration : Job) : Unit = {
-      connectorProvider(configuration)
+      connectorProvider.configure(configuration)
       scannerSettings(configuration)
       InputFormatBase.setInputTableName(configuration, tableName.toString)
       InputFormatBase.setBatchScan(configuration, true)
