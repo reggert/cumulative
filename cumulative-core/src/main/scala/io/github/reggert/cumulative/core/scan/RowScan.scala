@@ -28,7 +28,7 @@ final class RowScan private(entryScan : Scan) extends Serializable with Traversa
     *
     * @param configuration Hadoop job configuration to which to apply settings.
     */
-  def apply(configuration : Job) : Unit = entryScan.configure(configuration)
+  def configure(configuration : Job) : Unit = entryScan.configure(configuration)
 }
 
 
