@@ -5,6 +5,8 @@ import org.apache.accumulo.core.client.{BatchWriter, ConditionalWriter, Connecto
 
 import scala.util.Try
 
+import resource._
+
 
 /**
   * Interface for classes that write to a single table.
@@ -71,18 +73,15 @@ object TableWriter {
     connectorProvider : ConnectorProvider,
     writerSettings: WriterSettings
   ) extends TableWriter {
-    override def apply(mutations: TraversableOnce[RowMutation]): Unit = {
-      val batchWriter = connectorProvider.connector.createBatchWriter(
-        tableName.toString,
-        writerSettings.toBatchWriterConfig
-      )
-      try {
+    override def apply(mutations: TraversableOnce[RowMutation]): Unit =
+      managed(
+        connectorProvider.connector.createBatchWriter(
+          tableName.toString,
+          writerSettings.toBatchWriterConfig
+        )
+      ).foreach { batchWriter =>
         mutations.map(_.toAccumuloMutation).foreach(batchWriter.addMutation)
       }
-      finally {
-        batchWriter.close()
-      }
-    }
   }
 }
 
@@ -108,20 +107,16 @@ object MultiTableWriter {
     connectorProvider : ConnectorProvider,
     writerSettings: WriterSettings
   ) extends MultiTableWriter {
-    override def apply(mutationsByTable: TraversableOnce[(TableName, RowMutation)]): Unit = {
-      val multiTableBatchWriter =
+    override def apply(mutationsByTable: TraversableOnce[(TableName, RowMutation)]): Unit =
+      managed(
         connectorProvider.connector.createMultiTableBatchWriter(writerSettings.toBatchWriterConfig)
-      try {
+      ).foreach { multiTableBatchWriter =>
         mutationsByTable.foreach {
           case (tableName, rowMutation) =>
             val batchWriter = multiTableBatchWriter.getBatchWriter(tableName.toString)
             batchWriter.addMutation(rowMutation.toAccumuloMutation)
         }
       }
-      finally {
-        multiTableBatchWriter.close()
-      }
-    }
   }
 }
 
@@ -163,20 +158,17 @@ object ConditionalTableWriter {
     connectorProvider : ConnectorProvider,
     writerSettings: WriterSettings
   ) extends ConditionalTableWriter {
-    override def apply(mutations: Traversable[ConditionalRowMutation]): List[Result] = {
-      val conditionalWriter = connectorProvider.connector.createConditionalWriter(
-        tableName.toString,
-        writerSettings.toConditionalWriterConfig
-      )
-      try {
+    override def apply(mutations: Traversable[ConditionalRowMutation]): List[Result] =
+      managed(
+        connectorProvider.connector.createConditionalWriter(
+          tableName.toString,
+          writerSettings.toConditionalWriterConfig
+        )
+      ).acquireAndGet { conditionalWriter =>
         mutations.map { mutation =>
           val result = conditionalWriter.write(mutation.toAccumuloMutation)
           Result(mutation, result.getTabletServer, Try(result.getStatus))
         }.toList
       }
-      finally {
-        conditionalWriter.close()
-      }
-    }
   }
 }

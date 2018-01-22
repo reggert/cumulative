@@ -8,6 +8,8 @@ import org.apache.accumulo.core.iterators.user.WholeRowIterator
 
 import scala.collection.JavaConverters._
 
+import resource._
+
 
 /**
   * Immutable and serializable service to perform bulk deletions efficiently.
@@ -35,20 +37,18 @@ final class Deleter(val tableName : TableName)(implicit
     */
   def apply(ranges : Set[ScanRange], columns : Set[ColumnSelector] = Set.empty) : Unit =
     if (ranges.nonEmpty) {
-      val batchDeleter = connectorProvider.connector.createBatchDeleter(
-        tableName.toString,
-        scannerSettings.authorizations,
-        scannerSettings.numberOfQueryThreads,
-        writerSettings.toBatchWriterConfig
-      )
-      try {
+      managed(
+        connectorProvider.connector.createBatchDeleter(
+          tableName.toString,
+          scannerSettings.authorizations,
+          scannerSettings.numberOfQueryThreads,
+          writerSettings.toBatchWriterConfig
+        )
+      ).foreach { batchDeleter =>
         scannerSettings(batchDeleter)
         batchDeleter.setRanges(ranges.map(_.toAccumuloRange).asJavaCollection)
         columns.foreach(_(batchDeleter))
         batchDeleter.delete()
-      }
-      finally {
-        batchDeleter.close()
       }
     }
 }

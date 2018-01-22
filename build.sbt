@@ -25,7 +25,7 @@ lazy val miniAccumuloCluster = (
 
 lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
 
-lazy val scalaARM = "com.jsuereth" %% "scala-arm" % "2.0" % Test
+lazy val scalaARM = "com.jsuereth" %% "scala-arm" % "2.0" % Compile
 
 
 lazy val core = (project in file("cumulative-core")).settings(

@@ -10,6 +10,8 @@ import org.apache.hadoop.mapreduce.Job
 import scala.collection.JavaConverters._
 import scala.collection.immutable
 
+import resource._
+
 
 /**
   * Base class for scans against Accumulo entries.
@@ -19,7 +21,7 @@ import scala.collection.immutable
   * method to create a lazy view of the collection to avoid needlessly materializing the entire scan.
   */
 sealed abstract class Scan extends HadoopJobConfigurer with Traversable[Entry] {
-  protected def createScanner() : ScannerBase
+  protected def createScanner() : ManagedResource[ScannerBase]
   def tableName : TableName
   def iterators : immutable.Seq[IteratorConfiguration]
   def connectorProvider : ConnectorProvider
@@ -28,15 +30,10 @@ sealed abstract class Scan extends HadoopJobConfigurer with Traversable[Entry] {
   final def iteratorSettings : Iterable[IteratorSetting] =
     iterators.view.zipWithIndex.map { case (ic, p) => ic.toIteratorSetting(p) }
 
-  override final def foreach[U](f: Entry => U) : Unit = {
-    val scanner = createScanner()
-    try {
+  override final def foreach[U](f: Entry => U) : Unit =
+    createScanner().foreach {scanner =>
       scanner.asScala.map(Entry.apply).foreach(f)
     }
-    finally {
-      scanner.close()
-    }
-  }
 }
 
 
@@ -60,13 +57,14 @@ object Scan {
     implicit val connectorProvider : ConnectorProvider,
     implicit val scannerSettings : ScannerSettings.Simple
   ) extends Scan {
-    override protected def createScanner(): ScannerBase = {
+    override protected def createScanner(): ManagedResource[ScannerBase] = {
       val connector = connectorProvider.connector
-      val scanner = connector.createScanner(tableName.toString, scannerSettings.authorizations)
-      scannerSettings(scanner)
-      columns.foreach(_(scanner))
-      iteratorSettings.foreach(scanner.addScanIterator)
-      scanner
+      managed(connector.createScanner(tableName.toString, scannerSettings.authorizations)).map { scanner =>
+        scannerSettings(scanner)
+        columns.foreach(_ (scanner))
+        iteratorSettings.foreach(scanner.addScanIterator)
+        scanner
+      }
     }
 
     override def configure(configuration : Job) : Unit = {
@@ -121,17 +119,20 @@ object Scan {
     implicit val connectorProvider : ConnectorProvider,
     implicit val scannerSettings : ScannerSettings.Batch
   ) extends Scan {
-    override protected def createScanner(): ScannerBase = {
+    override protected def createScanner(): ManagedResource[ScannerBase] = {
       val connector = connectorProvider.connector
-      val scanner = connector.createBatchScanner(
-        tableName.toString,
-        scannerSettings.authorizations,
-        scannerSettings.numberOfQueryThreads
-      )
-      scannerSettings(scanner)
-      iteratorSettings.foreach(scanner.addScanIterator)
-      columns.foreach(_(scanner))
-      scanner
+      managed(
+        connector.createBatchScanner(
+          tableName.toString,
+          scannerSettings.authorizations,
+          scannerSettings.numberOfQueryThreads
+        )
+      ).map { scanner =>
+        scannerSettings(scanner)
+        iteratorSettings.foreach(scanner.addScanIterator)
+        columns.foreach(_ (scanner))
+        scanner
+      }
     }
 
     override def configure(configuration : Job) : Unit = {
