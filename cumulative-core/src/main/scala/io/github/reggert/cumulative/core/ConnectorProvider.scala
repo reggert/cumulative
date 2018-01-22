@@ -39,6 +39,17 @@ trait AuthenticationTokenProvider extends Serializable {
   */
 final class PasswordTokenProvider(val password : String) extends AuthenticationTokenProvider {
   @transient lazy val authenticationToken = new PasswordToken(password)
+
+  override def equals(other: Any): Boolean = other match {
+    case that: PasswordTokenProvider =>
+      password == that.password
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(password)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
 }
 
 
@@ -71,6 +82,22 @@ class BasicClientConfigurationProvider(
     ClientConfiguration.loadDefault().withInstance(instanceName).withZkHosts(connectString)
 
   @transient final lazy val clientConfiguration = createClientConfiguration()
+
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[BasicClientConfigurationProvider]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: BasicClientConfigurationProvider =>
+      (that canEqual this) &&
+        instanceName == that.instanceName &&
+        connectString == that.connectString
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(instanceName, connectString)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
 }
 
 
@@ -103,5 +130,24 @@ class ZookeeperConnectorProvider(
       configuration,
       clientConfigurationProvider.clientConfiguration
     )
+  }
+
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[ZookeeperConnectorProvider]
+
+
+  override def equals(other: Any): Boolean = other match {
+    case that: ZookeeperConnectorProvider =>
+      (that canEqual this) &&
+        clientConfigurationProvider == that.clientConfigurationProvider &&
+        principal == that.principal &&
+        authenticationTokenProvider == that.authenticationTokenProvider
+    case _ => false
+  }
+
+
+  override def hashCode(): Int = {
+    val state = Seq(clientConfigurationProvider, principal, authenticationTokenProvider)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 }
