@@ -19,7 +19,13 @@ lazy val accumuloCore = (
     exclude("javax.servlet", "servlet-api")
 )
 
+lazy val miniAccumuloCluster = (
+  "org.apache.accumulo" % "accumulo-minicluster" % accumuloVersion % Test
+)
+
 lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
+
+lazy val scalaARM = "com.jsuereth" %% "scala-arm" % "2.0" % Test
 
 
 lazy val core = (project in file("cumulative-core")).settings(
@@ -27,7 +33,9 @@ lazy val core = (project in file("cumulative-core")).settings(
   autoScalaLibrary := true,
   libraryDependencies := Seq(
     accumuloCore,
+    miniAccumuloCluster,
     scalaTest,
+    scalaARM,
     "org.scala-lang" % "scala-library" % scalaVersion.value % Compile
   ),
   crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.4")
