@@ -1,6 +1,7 @@
 package io.github.reggert.cumulative.core
 
 import org.apache.accumulo.core.client.mapreduce.AbstractInputFormat
+import org.apache.accumulo.core.client.mock.MockInstance
 import org.apache.accumulo.core.client.{ClientConfiguration, Connector, ZooKeeperInstance}
 import org.apache.accumulo.core.client.security.tokens.{AuthenticationToken, PasswordToken}
 import org.apache.hadoop.mapreduce.Job
@@ -150,4 +151,54 @@ class ZookeeperConnectorProvider(
     val state = Seq(clientConfigurationProvider, principal, authenticationTokenProvider)
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
+}
+
+
+//noinspection ScalaDeprecation
+class MockConnectorProvider(
+  val instanceName : String,
+  val principal : String,
+  val authenticationTokenProvider : AuthenticationTokenProvider
+) extends ConnectorProvider {
+  @transient lazy val instance = MockConnectorProvider.instanceByName(instanceName)
+  @transient lazy val connector: Connector =
+    instance.getConnector(principal, authenticationTokenProvider.authenticationToken)
+
+  override def configure(configuration: Job): Unit = {
+    AbstractInputFormat.setConnectorInfo(
+      configuration,
+      principal,
+      authenticationTokenProvider.authenticationToken
+    )
+    AbstractInputFormat.setMockInstance(
+      configuration,
+      instanceName
+    )
+  }
+
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[MockConnectorProvider]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: MockConnectorProvider =>
+      (that canEqual this) &&
+        instanceName == that.instanceName &&
+        principal == that.principal &&
+        authenticationTokenProvider == that.authenticationTokenProvider
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(instanceName, principal, authenticationTokenProvider)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+}
+
+
+//noinspection ScalaDeprecation
+object MockConnectorProvider {
+  import scala.collection.concurrent
+  private val instances = concurrent.TrieMap.empty[String, MockInstance]
+  private def instanceByName(name : String) : MockInstance =
+    instances.getOrElseUpdate(name, new MockInstance(name))
 }
