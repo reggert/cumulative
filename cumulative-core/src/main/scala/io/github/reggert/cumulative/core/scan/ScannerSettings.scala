@@ -42,7 +42,7 @@ sealed trait ScannerSettings extends Serializable {
     *
     * @param scanner scanner to configure.
     */
-  protected final def apply(scanner : ScannerBase) : Unit = {
+  final def apply(scanner : ScannerBase) : Unit = {
     if (timeout.isFinite()) {
       scanner.setTimeout(timeout.toMillis, TimeUnit.MILLISECONDS)
     }
