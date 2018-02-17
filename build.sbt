@@ -44,6 +44,8 @@ lazy val slf4jAPI = "org.slf4j" % "slf4j-api" % "1.7.25" % Compile
 
 lazy val jclOverSLF4J = "org.slf4j" % "jcl-over-slf4j" % "1.7.25" % Test
 
+lazy val scalaMock = "org.scalamock" %% "scalamock" % "4.0.0" % Test
+
 /*
   This is needed by the processes started by MiniAccumuloCluster, which apparently
   touch the internals of Log4J 1.2 and not just the API. I'm looking at you, ZooKeeper. >:-(
@@ -64,6 +66,7 @@ lazy val core = (project in file("cumulative-core")).settings(
     jclOverSLF4J,
     log4j1,
     scalaTest,
+    scalaMock,
     scalaARM,
     "org.scala-lang" % "scala-library" % scalaVersion.value % Compile
   ),
@@ -76,6 +79,7 @@ lazy val model = (project in file("cumulative-model")).settings(
   libraryDependencies := Seq(
     accumuloCore,
     scalaTest,
+    scalaMock,
     "org.scala-lang" % "scala-library" % scalaVersion.value % Compile
   ),
   crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.4")

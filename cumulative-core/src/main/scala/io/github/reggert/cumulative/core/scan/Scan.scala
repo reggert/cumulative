@@ -168,7 +168,7 @@ object Scan {
         scannerSettings(scanner)
         iteratorSettings.foreach(scanner.addScanIterator)
         columns.foreach(_ (scanner))
-        scanner.setRanges(ranges.map(_.toAccumuloRange).asJavaCollection)
+        scanner.setRanges(ranges.view.map(_.toAccumuloRange).asJavaCollection)
         scanner
       }
     }
@@ -178,7 +178,7 @@ object Scan {
       scannerSettings(configuration)
       InputFormatBase.setInputTableName(configuration, tableName.toString)
       InputFormatBase.setBatchScan(configuration, true)
-      InputFormatBase.setRanges(configuration, ranges.map(_.toAccumuloRange).asJavaCollection)
+      InputFormatBase.setRanges(configuration, ranges.view.map(_.toAccumuloRange).asJavaCollection)
       iteratorSettings.foreach(InputFormatBase.addIterator(configuration, _))
     }
   }
