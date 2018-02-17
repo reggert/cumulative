@@ -96,6 +96,7 @@ object Scan {
         scannerSettings(scanner)
         columns.foreach(_ (scanner))
         iteratorSettings.foreach(scanner.addScanIterator)
+        scanner.setRange(range.toAccumuloRange)
         scanner
       }
     }
