@@ -21,15 +21,48 @@ import resource._
   * method to create a lazy view of the collection to avoid needlessly materializing the entire scan.
   */
 sealed abstract class Scan extends HadoopJobConfigurer with Traversable[Entry] {
+  /**
+    * Implemented by subclasses to construct the appropriate type of scanner.
+    * @return a scanner wrapped in [[ManagedResource]].
+    */
   protected def createScanner() : ManagedResource[ScannerBase]
-  def tableName : TableName
-  def iterators : immutable.Seq[IteratorConfiguration]
-  def connectorProvider : ConnectorProvider
-  def scannerSettings : ScannerSettings
 
+  /**
+    * The name of the table to be scanned.
+    */
+  val tableName : TableName
+
+  /**
+    * The configurations for the server-side iterators to use in the scan.
+    */
+  val iterators : immutable.Seq[IteratorConfiguration]
+
+  /**
+    * Provider of the Accumulo `Connector` to be used in the scan.
+    */
+  val connectorProvider : ConnectorProvider
+
+  /**
+    * Settings to pass to the scanner.
+    */
+  val scannerSettings : ScannerSettings
+
+  /**
+    * Converts the `iterators` to a collection of [[IteratorSetting]] objects with assigned
+    * priorities.
+    *
+    * @return a collection of [[IteratorSetting]] objects, where each is assigned a priority
+    *         based on its index in `iterators`.
+    */
   final def iteratorSettings : Iterable[IteratorSetting] =
     iterators.view.zipWithIndex.map { case (ic, p) => ic.toIteratorSetting(p) }
 
+  /**
+    * This implementation of `foreach` performs the scan.
+    *
+    * @param f callback to invoke for each entry returned by Accumulo.
+    * @tparam U return type of the callback.
+    */
   override final def foreach[U](f: Entry => U) : Unit =
     createScanner().foreach {scanner =>
       scanner.asScala.map(Entry.apply).foreach(f)
@@ -78,6 +111,9 @@ object Scan {
   }
 
 
+  /**
+    * Factory for simple scans.
+    */
   object Simple {
     /**
       * Constructs a single-range in-order scan.
@@ -146,6 +182,9 @@ object Scan {
   }
 
 
+  /**
+    * Factory for batch scans.
+    */
   object Batch {
     /**
       * Constructs a multi-range unordered scan.

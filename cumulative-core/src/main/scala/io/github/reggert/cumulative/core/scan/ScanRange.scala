@@ -15,6 +15,9 @@ sealed abstract class ScanRange extends Serializable {
 }
 
 
+/**
+  * Immutable representations of key ranges to use when scanning an Accumulo table.
+  */
 object ScanRange {
 
   /**
@@ -24,10 +27,20 @@ object ScanRange {
 
   /**
     * Class to wrap a value to indicate that whether it is an inclusive or exclusive bound.
+    *
     * @tparam T the underlying type.
     */
   sealed abstract class Bound[T] extends Serializable {
-    def value : T
+    /**
+      * The wrapped value.
+      */
+    val value : T
+
+    /**
+      * Indicates whether this is an inclusive or exclusive bound.
+      *
+      * @return `true` if the bound is inclusive; `false` if the bound is exclusive.
+      */
     def isInclusive : Boolean
   }
   final case class Inclusive[T](value : T) extends Bound[T] {
@@ -36,12 +49,29 @@ object ScanRange {
   final case class Exclusive[T](value : T) extends Bound[T] {
     override def isInclusive: Boolean = false
   }
+
+  /**
+    * Companion object for `Bound`.
+    */
   object Bound {
+    /**
+      * Ordering to use for minimum bounds. Inclusive minimum bounds sort before exclusive minimum bounds.
+      *
+      * @tparam T the underlying value type being bounded.
+      * @return a minimum ordering for the bound type.
+      */
     def minimumBoundOrdering[T : Ordering] : Ordering[Bound[T]] =
       Ordering.by[Bound[T], (T, Int)] {
         case Inclusive(x) => (x, 0)
         case Exclusive(x) => (x, 1)
       }
+
+    /**
+      * Ordering to use for maximum bounds. Exclusive maximum bounds sort bofore inclusive maximum bounds.
+      *
+      * @tparam T the underlying value type being bounded.
+      * @return a maximum ordering for the bound type.
+      */
     def maximumBoundOrdering[T : Ordering] : Ordering[Bound[T]] =
       Ordering.by[Bound[T], (T, Int)] {
         case Inclusive(x) => (x, 1)

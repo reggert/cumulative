@@ -32,6 +32,9 @@ final class RowScan private(entryScan : Scan) extends HadoopJobConfigurer with T
 }
 
 
+/**
+  * Factory for scans against entire Accumulo rows.
+  */
 object RowScan {
   /**
     * Constructs a single-range in-order scan.

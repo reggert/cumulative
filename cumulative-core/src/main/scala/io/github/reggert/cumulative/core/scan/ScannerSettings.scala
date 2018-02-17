@@ -15,16 +15,34 @@ import scala.concurrent.duration.Duration
   * Base class for containers of settings to pass to Accumulo scanners.
   */
 sealed trait ScannerSettings extends Serializable {
-  def timeout : Duration
-  def batchTimeout : Duration
-  def classLoaderContext : Option[String]
-  def authorizations : Authorizations
+  /**
+    * The timeout for retries in the event of I/O failures; may be undefined/infinite to retry indefinitely.
+    */
+  val timeout : Duration
+
+  /**
+    * The amount of time to wait for the batch buffer to fill before returning the results; may be
+    * undefined/infinite to always wait for the buffer to completely fill.
+    */
+  val batchTimeout : Duration
+
+  /**
+    * Optional classloader context to pass to the underlying scanner.
+    */
+  val classLoaderContext : Option[String]
+
+  /**
+    * Scan authorizations to pass to the scanner; this, intersected with the user's allowed authorizations,
+    * is checked against each entry's visibility to determine whether to return that entry to the user.
+    */
+  val authorizations : Authorizations
 
   /**
     * Applies these settings to a scanner.
+    *
     * @param scanner scanner to configure.
     */
-  final def apply(scanner : ScannerBase) : Unit = {
+  protected final def apply(scanner : ScannerBase) : Unit = {
     if (timeout.isFinite()) {
       scanner.setTimeout(timeout.toMillis, TimeUnit.MILLISECONDS)
     }
@@ -36,6 +54,7 @@ sealed trait ScannerSettings extends Serializable {
 
   /**
     * Applies these settings to a Hadoop job configuration (for use with [[AccumuloInputFormat]]).
+    *
     * @param configuration Hadoop job configuration to which to apply settings.
     */
   def apply(configuration : Job) : Unit = {
@@ -49,6 +68,19 @@ object ScannerSettings {
 
   /**
     * Settings used by simple scanners.
+    *
+    * @param timeout The timeout for retries in the event of I/O failures; may be undefined/infinite to retry
+    *                indefinitely.
+    * @param batchTimeout The amount of time to wait for the batch buffer to fill before returning the
+    *                     results; may be undefined/infinite to always wait for the buffer to completely fill.
+    * @param classLoaderContext Optional classloader context to pass to the underlying scanner.
+    * @param authorizations Scan authorizations to pass to the scanner; this, intersected with the user's
+    *                       allowed authorizations, s checked against each entry's visibility to determine
+    *                       whether to return that entry to the user.
+    * @param batchSize The number of entries to attempt to return from the server at a time.
+    * @param readAheadThreshold The number of batches of entries the scanner will return before triggering
+    *                           readahead in the background.
+    * @param isolationEnabled Whether to enable scan isolation.
     */
   final case class Simple(
     timeout: Duration = Duration.Undefined,
@@ -85,6 +117,16 @@ object ScannerSettings {
 
   /**
     * Settings used by batch scanners.
+    *
+    * @param timeout The timeout for retries in the event of I/O failures; may be undefined/infinite to retry
+    *                indefinitely.
+    * @param batchTimeout The amount of time to wait for the batch buffer to fill before returning the
+    *                     results; may be undefined/infinite to always wait for the buffer to completely fill.
+    * @param classLoaderContext Optional classloader context to pass to the underlying scanner.
+    * @param authorizations Scan authorizations to pass to the scanner; this, intersected with the user's
+    *                       allowed authorizations, s checked against each entry's visibility to determine
+    *                       whether to return that entry to the user.
+    * @param numberOfQueryThreads Size of thread pool to use to query multiple tablet servers simultaneously.
     */
   final case class Batch(
     timeout: Duration = Duration.Undefined,
