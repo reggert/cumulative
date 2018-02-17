@@ -167,6 +167,7 @@ object Scan {
         scannerSettings(scanner)
         iteratorSettings.foreach(scanner.addScanIterator)
         columns.foreach(_ (scanner))
+        scanner.setRanges(ranges.map(_.toAccumuloRange).asJavaCollection)
         scanner
       }
     }
