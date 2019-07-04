@@ -64,7 +64,7 @@ class ScanTest extends FunSuite with Matchers with MockFactory {
     (connector.createScanner _).expects(tableName.toString, scannerSettings.authorizations).returns(scanner)
 
     val scan = Scan.Simple(tableName, range, columns = columns)
-    scan.toList should equal (entries)
+    scan.results.acquireAndGet(_.toList) should equal (entries)
   }
 
 
@@ -117,6 +117,6 @@ class ScanTest extends FunSuite with Matchers with MockFactory {
     ).returns(scanner)
 
     val scan = Scan.Batch(tableName, ranges, columns = columns)
-    scan.toList should equal (entries)
+    scan.results.acquireAndGet(_.toList) should equal (entries)
   }
 }

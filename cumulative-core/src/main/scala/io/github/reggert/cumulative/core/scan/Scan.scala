@@ -15,12 +15,8 @@ import resource._
 
 /**
   * Base class for scans against Accumulo entries.
-  *
-  * All scans extend the [[Traversable]] trait. Note that some operations on `Traversable` cause all elements
-  * within the range to be read right away. When chaining operations, it is recommended to use the `view`
-  * method to create a lazy view of the collection to avoid needlessly materializing the entire scan.
   */
-sealed abstract class Scan extends HadoopJobConfigurer with Traversable[Entry] {
+sealed abstract class Scan extends HadoopJobConfigurer {
   /**
     * Implemented by subclasses to construct the appropriate type of scanner.
     * @return a scanner wrapped in [[ManagedResource]].
@@ -58,15 +54,13 @@ sealed abstract class Scan extends HadoopJobConfigurer with Traversable[Entry] {
     iterators.view.map { case (p, ic) => ic.toIteratorSetting(p) }
 
   /**
-    * This implementation of `foreach` performs the scan.
+    * Creates a [[ManagedResource]] encapsulating the scan results.
     *
-    * @param f callback to invoke for each entry returned by Accumulo.
-    * @tparam U return type of the callback.
+    * @return a [[ManagedResource]] managing an iterator over returned entries.
     */
-  override final def foreach[U](f: Entry => U) : Unit =
-    createScanner().foreach {scanner =>
-      scanner.asScala.map(Entry.apply).foreach(f)
-    }
+  def results : ManagedResource[Iterator[Entry]] =
+    for (scanner <- createScanner())
+      yield scanner.asScala.map(Entry.apply).iterator
 }
 
 

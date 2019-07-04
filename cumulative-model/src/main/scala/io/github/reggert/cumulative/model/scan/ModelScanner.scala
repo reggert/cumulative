@@ -5,6 +5,7 @@ import io.github.reggert.cumulative.core.scan.{RowScan, Scan, ScanRange, Scanner
 import io.github.reggert.cumulative.core.{ConnectorProvider, TableName}
 import io.github.reggert.cumulative.model.{EntryModel, RecordModel, RowModel}
 import org.apache.accumulo.core.client.Connector
+import resource.ManagedResource
 
 import scala.collection.immutable
 import scala.util.Try
@@ -13,10 +14,7 @@ import scala.util.Try
 /**
   * Base class for factories of scans that apply a record model to the results.
   *
-  * Note that the returned `Traversable`s will re-run the scans every time an operation (such as `foreach`) is
-  * invoked on them.
-  *
-  * Additionally, failure to translate a record will always result in an exception, which, in cases where
+  * Failure to translate a record will always result in an exception, which, in cases where
   * failure to translate is expected to occur frequently, may be expensive due to the cost of building stack
   * traces. In such cases, it may be preferable to define the record type as `Either[D, R]`, where it returns
   * a `Left[D]` on success and a `Right[R]` on failure, to report the untranslatable raw values without
@@ -43,8 +41,8 @@ sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
     * @return a lazy collection of records returned from Accumulo.
     */
   final def scan(range : model.RecordRange = model.FullTable)
-    (implicit scannerSettings: ScannerSettings.Simple = ScannerSettings.Simple()) : Traversable[D] =
-    tryScan(range).map {case (_, d) => d.get}
+    (implicit scannerSettings: ScannerSettings.Simple = ScannerSettings.Simple()) : ManagedResource[Iterator[D]] =
+    tryScan(range).map(_.map {case (_, d) => d.get})
 
   /**
     * Scans the specified ranges of records and returns them.
@@ -56,8 +54,8 @@ sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
     * @return a lazy collection of records returned from Accumulo.
     */
   final def scanBatch(ranges : immutable.Set[model.RecordRange])
-    (implicit scannerSettings: ScannerSettings.Batch = ScannerSettings.Batch()) : Traversable[D] =
-    tryScanBatch(ranges).map {case (_, d) => d.get}
+    (implicit scannerSettings: ScannerSettings.Batch = ScannerSettings.Batch()) : ManagedResource[Iterator[D]] =
+    tryScanBatch(ranges).map(_.map {case (_, d) => d.get})
 
   /**
     * Scans the specified range of records and returns the results of translating them along with the raw
@@ -69,8 +67,8 @@ sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
     *         Accumulo, and the right side is the result of attempting to translate it into a domain record.
     */
   final def tryScan(range : model.RecordRange = model.FullTable)
-    (implicit scannerSettings: ScannerSettings.Simple = ScannerSettings.Simple()) : Traversable[(R, Try[D])] =
-    rawScan(range.toScanRange).view.map {raw => raw -> Try(model.domainFromRaw(raw))}
+    (implicit scannerSettings: ScannerSettings.Simple = ScannerSettings.Simple()) : ManagedResource[Iterator[(R, Try[D])]] =
+    rawScan(range.toScanRange).map(_.map {raw => raw -> Try(model.domainFromRaw(raw))})
 
   /**
     * Scans the specified ranges of records and returns the results of translating them along with the raw
@@ -82,8 +80,8 @@ sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
     *         Accumulo, and the right side is the result of attempting to translate it into a domain record.
     */
   final def tryScanBatch(ranges : immutable.Set[model.RecordRange])
-    (implicit scannerSettings: ScannerSettings.Batch = ScannerSettings.Batch()) : Traversable[(R, Try[D])] =
-    rawScan(ranges.map(_.toScanRange)).view.map {raw => raw -> Try(model.domainFromRaw(raw))}
+    (implicit scannerSettings: ScannerSettings.Batch = ScannerSettings.Batch()) : ManagedResource[Iterator[(R, Try[D])]] =
+    rawScan(ranges.map(_.toScanRange)).map(_.map {raw => raw -> Try(model.domainFromRaw(raw))})
 
   /**
     * Implemented by subclasses to perform the underlying raw (untranslated scan).
@@ -93,7 +91,7 @@ sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
     * @return lazy collection containing raw scan results.
     */
   protected def rawScan(scanRange : B)
-    (implicit scannerSettings: ScannerSettings.Simple) : Traversable[R]
+    (implicit scannerSettings: ScannerSettings.Simple) : ManagedResource[Iterator[R]]
 
   /**
     * Implemented by subclasses to perform the underlying raw (untranslated scan).
@@ -103,7 +101,7 @@ sealed abstract class ModelScanner[D, R, B <: ScanRange] protected(
     * @return lazy collection containing raw scan results.
     */
   protected def rawScan(scanRanges : immutable.Set[_ <: B])
-    (implicit scannerSettings: ScannerSettings.Batch) : Traversable[R]
+    (implicit scannerSettings: ScannerSettings.Batch) : ManagedResource[Iterator[R]]
 }
 
 
@@ -122,12 +120,12 @@ final class EntryModelScanner[D](
   extends ModelScanner[D, Entry, ScanRange](model, tableName)
 {
   override protected def rawScan(scanRange: ScanRange)
-    (implicit scannerSettings: ScannerSettings.Simple): Traversable[Entry] =
-    Scan.Simple(tableName, scanRange, columns = model.columnSelectors)
+    (implicit scannerSettings: ScannerSettings.Simple): ManagedResource[Iterator[Entry]] =
+    Scan.Simple(tableName, scanRange, columns = model.columnSelectors).results
 
   override protected def rawScan(scanRanges: Set[_ <: ScanRange])
-    (implicit scannerSettings: ScannerSettings.Batch): Traversable[Entry] =
-    Scan.Batch(tableName, scanRanges, columns = model.columnSelectors)
+    (implicit scannerSettings: ScannerSettings.Batch): ManagedResource[Iterator[Entry]] =
+    Scan.Batch(tableName, scanRanges, columns = model.columnSelectors).results
 }
 
 
@@ -146,10 +144,10 @@ final class RowModelScanner[D](
   extends ModelScanner[D, Row, ScanRange.WholeRow](model, tableName)
 {
   override protected def rawScan(scanRange: ScanRange.WholeRow)
-    (implicit scannerSettings: ScannerSettings.Simple): Traversable[Row] =
-    RowScan.Simple(tableName, scanRange, columns = model.columnSelectors)
+    (implicit scannerSettings: ScannerSettings.Simple): ManagedResource[Iterator[Row]] =
+    RowScan.Simple(tableName, scanRange, columns = model.columnSelectors).results
 
   override protected def rawScan(scanRanges: Set[_ <: ScanRange.WholeRow])
-    (implicit scannerSettings: ScannerSettings.Batch): Traversable[Row] =
-    RowScan.Batch(tableName, scanRanges, columns = model.columnSelectors)
+    (implicit scannerSettings: ScannerSettings.Batch): ManagedResource[Iterator[Row]] =
+    RowScan.Batch(tableName, scanRanges, columns = model.columnSelectors).results
 }

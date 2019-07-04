@@ -6,19 +6,22 @@ import io.github.reggert.cumulative.core.{ConnectorProvider, HadoopJobConfigurer
 import org.apache.accumulo.core.client.Connector
 import org.apache.accumulo.core.client.mapred.AccumuloInputFormat
 import org.apache.hadoop.mapreduce.Job
+import resource.ManagedResource
 
 import scala.collection.immutable
 
 
 /**
   * Immutable scan against entire Accumulo rows.
-  *
-  * All scans extend the [[Traversable]] trait. Note that some operations on `Traversable` cause all elements
-  * within the range to be read right away. When chaining operations, it is recommended to use the `view`
-  * method to create a lazy view of the collection to avoid needlessly materializing the entire scan.
   */
-final class RowScan private(entryScan : Scan) extends HadoopJobConfigurer with Traversable[Row] {
-  override def foreach[U](f: Row => U): Unit = entryScan.foreach(Row.decode)
+final class RowScan private(entryScan : Scan) extends HadoopJobConfigurer {
+
+  /**
+    * Creates a [[ManagedResource]] encapsulating the scan results.
+    *
+    * @return a [[ManagedResource]] managing an iterator over returned rows.
+    */
+  def results : ManagedResource[Iterator[Row]] = entryScan.results.map(_.map(Row.decode))
 
   /**
     * Configures a Hadoop job configuration for this scan for use with [[AccumuloInputFormat]].

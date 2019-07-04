@@ -4,20 +4,18 @@ import java.io._
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{FileVisitResult, Files, Path, SimpleFileVisitor}
 
-import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat
 import org.apache.accumulo.minicluster.MiniAccumuloCluster
-import org.apache.hadoop.mapreduce.Job
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
+import resource._
 
 import scala.collection.JavaConverters._
-import resource._
 
 
 /**
   * Unit tests for [[ZookeeperConnectorProvider]].
   */
 class ZookeeperConnectorProviderTest extends FunSuite with Matchers with BeforeAndAfterAll {
-  val tempDir = Files.createTempDirectory(null)
+  val tempDir: Path = Files.createTempDirectory(null)
   val rootPassword = "password"
   val accumuloCluster = new MiniAccumuloCluster(tempDir.toFile, rootPassword)
   val authenticationTokenProvider = new PasswordTokenProvider(rootPassword)
@@ -28,12 +26,12 @@ class ZookeeperConnectorProviderTest extends FunSuite with Matchers with BeforeA
 
 
   override def beforeAll() : Unit = {
-    //accumuloCluster.start()
+    accumuloCluster.start()
   }
 
 
   override def afterAll(): Unit = {
-    //accumuloCluster.stop()
+    accumuloCluster.stop()
     Files.walkFileTree(tempDir, new SimpleFileVisitor[Path] {
       override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
         Files.delete(file)
@@ -48,8 +46,7 @@ class ZookeeperConnectorProviderTest extends FunSuite with Matchers with BeforeA
   }
 
 
-  // Getting this to work on Windows is too much of a PITA.
-  ignore("ZookeeperConnectorProvider.connector") {
+  test("ZookeeperConnectorProvider.connector") {
     val connector = connectorProvider.connector
     connector.securityOperations().listLocalUsers().asScala should not be empty
   }
