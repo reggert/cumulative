@@ -160,7 +160,7 @@ class MockConnectorProvider(
   val principal : String,
   val authenticationTokenProvider : AuthenticationTokenProvider
 ) extends ConnectorProvider {
-  @transient lazy val instance = MockConnectorProvider.instanceByName(instanceName)
+  @transient lazy val instance: MockInstance = MockConnectorProvider.instanceByName(instanceName)
   @transient lazy val connector: Connector =
     instance.getConnector(principal, authenticationTokenProvider.authenticationToken)
 
