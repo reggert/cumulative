@@ -15,7 +15,7 @@ javacOptions in ThisBuild ++= Seq("-source", "1.8", "-target", "1.8")
 
 scalacOptions in ThisBuild ++= Seq("-target:jvm-1.8", "-deprecation", "-feature")
 
-lazy val accumuloVersion = "1.8.1"
+lazy val accumuloVersion = "1.9.3"
 
 lazy val accumuloCore = (
   "org.apache.accumulo" % "accumulo-core" % accumuloVersion % Compile
@@ -39,17 +39,22 @@ lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
 
 lazy val scalaARM = "com.jsuereth" %% "scala-arm" % "2.0" % Compile
 
-lazy val log4jAPI = "org.apache.logging.log4j" % "log4j-api" % "2.10.0" % Compile
-
-lazy val log4jCore = "org.apache.logging.log4j" % "log4j-core" % "2.10.0" % Runtime
-
-lazy val log4jSLF4J = "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.10.0" % Test
+val log4jVersion = "2.10.0"
+lazy val log4jAPI = "org.apache.logging.log4j" % "log4j-api" % log4jVersion % Compile
+lazy val log4jCore = "org.apache.logging.log4j" % "log4j-core" % log4jVersion % Runtime
+lazy val log4jSLF4J = "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion % Test
 
 lazy val slf4jAPI = "org.slf4j" % "slf4j-api" % "1.7.25" % Compile
 
 lazy val jclOverSLF4J = "org.slf4j" % "jcl-over-slf4j" % "1.7.25" % Test
 
 lazy val scalaMock = "org.scalamock" %% "scalamock" % "4.0.0" % Test
+
+val hadoopGroupId = "org.apache.hadoop"
+val hadoopVersion = "3.2.0"
+lazy val hadoopClientAPI = hadoopGroupId % "hadoop-client-api" % hadoopVersion % Compile
+lazy val hadoopClientRuntime = hadoopGroupId % "hadoop-client-runtime" % hadoopVersion % Runtime
+lazy val hadoopMapReduce = hadoopGroupId % "hadoop-mapreduce" % hadoopVersion % Compile
 
 /*
   This is needed by the processes started by MiniAccumuloCluster, which apparently
@@ -64,6 +69,8 @@ lazy val core = (project in file("cumulative-core")).settings(
   libraryDependencies := Seq(
     accumuloCore,
     miniAccumuloCluster,
+    hadoopClientAPI,
+    hadoopClientRuntime,
     log4jAPI,
     log4jCore,
     log4jSLF4J,
