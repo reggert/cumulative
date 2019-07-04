@@ -1,7 +1,7 @@
 package io.github.reggert.cumulative.core.scan
 
 import io.github.reggert.cumulative.core.data.Row
-import io.github.reggert.cumulative.core.scan.iterators.WholeRow
+import io.github.reggert.cumulative.core.scan.iterators.{IteratorConfiguration, WholeRow}
 import io.github.reggert.cumulative.core.{ConnectorProvider, HadoopJobConfigurer, TableName}
 import org.apache.accumulo.core.client.Connector
 import org.apache.accumulo.core.client.mapred.AccumuloInputFormat
@@ -52,7 +52,7 @@ object RowScan {
   ) (implicit
     connectorProvider : ConnectorProvider,
     scannerSettings : ScannerSettings.Simple = ScannerSettings.Simple()
-  ) : RowScan = new RowScan(Scan.Simple(tableName, range, List(WholeRow()), columns))
+  ) : RowScan = new RowScan(Scan.Simple(tableName, range, Map(IteratorConfiguration.MaxPriority -> WholeRow()), columns))
 
   /**
     * Constructs a multi-range unordered scan.
@@ -70,5 +70,5 @@ object RowScan {
   ) (implicit
     connectorProvider : ConnectorProvider,
     scannerSettings : ScannerSettings.Batch = ScannerSettings.Batch()
-  ) : RowScan = new RowScan(Scan.Batch(tableName, ranges, List(WholeRow()), columns))
+  ) : RowScan = new RowScan(Scan.Batch(tableName, ranges, Map(IteratorConfiguration.MaxPriority -> WholeRow()), columns))
 }

@@ -35,7 +35,7 @@ sealed abstract class Scan extends HadoopJobConfigurer with Traversable[Entry] {
   /**
     * The configurations for the server-side iterators to use in the scan.
     */
-  val iterators : immutable.Seq[IteratorConfiguration]
+  val iterators : immutable.Map[IteratorConfiguration.Priority, IteratorConfiguration]
 
   /**
     * Provider of the Accumulo `Connector` to be used in the scan.
@@ -55,7 +55,7 @@ sealed abstract class Scan extends HadoopJobConfigurer with Traversable[Entry] {
     *         based on its index in `iterators`.
     */
   final def iteratorSettings : Iterable[IteratorSetting] =
-    iterators.view.zipWithIndex.map { case (ic, p) => ic.toIteratorSetting(p) }
+    iterators.view.map { case (p, ic) => ic.toIteratorSetting(p) }
 
   /**
     * This implementation of `foreach` performs the scan.
@@ -84,7 +84,7 @@ object Scan {
   final class Simple(
     val tableName : TableName,
     val range : ScanRange = ScanRange.FullTable,
-    val iterators : immutable.Seq[IteratorConfiguration],
+    val iterators : immutable.Map[IteratorConfiguration.Priority, IteratorConfiguration],
     val columns : immutable.Set[ColumnSelector]
   )(
     implicit val connectorProvider : ConnectorProvider,
@@ -129,7 +129,7 @@ object Scan {
     def apply(
       tableName : TableName,
       range : ScanRange = ScanRange.FullTable,
-      iterators : immutable.Seq[IteratorConfiguration] = Nil,
+      iterators : immutable.Map[IteratorConfiguration.Priority, IteratorConfiguration] = Map.empty,
       columns : immutable.Set[ColumnSelector] = Set.empty
     ) (implicit
       connectorProvider : ConnectorProvider,
@@ -150,7 +150,7 @@ object Scan {
   final class Batch(
     val tableName : TableName,
     val ranges : immutable.Set[_ <: ScanRange],
-    val iterators : immutable.Seq[IteratorConfiguration],
+    val iterators : immutable.Map[IteratorConfiguration.Priority, IteratorConfiguration],
     val columns : immutable.Set[ColumnSelector]
   ) (
     implicit val connectorProvider : ConnectorProvider,
@@ -201,7 +201,7 @@ object Scan {
     def apply(
       tableName : TableName,
       ranges : immutable.Set[_ <: ScanRange],
-      iterators : immutable.Seq[IteratorConfiguration] = Nil,
+      iterators : immutable.Map[IteratorConfiguration.Priority, IteratorConfiguration] = Map.empty,
       columns : immutable.Set[ColumnSelector] = Set.empty
     ) (implicit
       connectorProvider : ConnectorProvider,

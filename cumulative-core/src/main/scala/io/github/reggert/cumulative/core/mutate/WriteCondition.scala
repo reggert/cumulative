@@ -2,7 +2,7 @@ package io.github.reggert.cumulative.core.mutate
 
 import io.github.reggert.cumulative.core.data.{ColumnIdentifier, EntryValue, EntryVisibility, Timestamp}
 import io.github.reggert.cumulative.core.scan.iterators.IteratorConfiguration
-import org.apache.accumulo.core.data.{Condition, ConditionalMutation}
+import org.apache.accumulo.core.data.Condition
 
 import scala.collection.immutable
 
@@ -18,7 +18,7 @@ sealed abstract class WriteCondition extends Serializable {
   /**
     * Accumulo iterators to apply prior to evaluating the condition.
     */
-  def iterators : immutable.Seq[IteratorConfiguration]
+  def iterators : immutable.Map[IteratorConfiguration.Priority, IteratorConfiguration]
 
   /**
     * Constructs an Accumulo [[Condition]] object from this object.
@@ -31,7 +31,7 @@ sealed abstract class WriteCondition extends Serializable {
       case Timestamp.Specified(ts) => condition.setTimestamp(ts)
       case _ => condition
     }
-    condition.setIterators(iterators.view.zipWithIndex.map { case (i, p) => i.toIteratorSetting(p)} : _*)
+    condition.setIterators(iterators.view.map { case (p, i) => i.toIteratorSetting(p)}.toSeq : _*)
   }
 }
 
@@ -51,7 +51,7 @@ object WriteCondition {
     value : EntryValue,
     visibility : EntryVisibility = EntryVisibility(),
     timestamp : Timestamp = Timestamp.Unspecified,
-    iterators : immutable.Seq[IteratorConfiguration] = Nil
+    iterators : immutable.Map[IteratorConfiguration.Priority, IteratorConfiguration] = Map.empty
   ) extends WriteCondition {
     override def toAccumuloCondition : Condition = super.toAccumuloCondition.setValue(value.toArray)
   }
@@ -67,6 +67,6 @@ object WriteCondition {
     column : ColumnIdentifier,
     visibility : EntryVisibility = EntryVisibility(),
     timestamp : Timestamp = Timestamp.Unspecified,
-    iterators : immutable.Seq[IteratorConfiguration] = Nil
+    iterators : immutable.Map[IteratorConfiguration.Priority, IteratorConfiguration] = Map.empty
   ) extends WriteCondition
 }

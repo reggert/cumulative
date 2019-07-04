@@ -7,14 +7,11 @@ import scala.collection.JavaConverters._
 
 /**
   * Immutable representation of the configuration for an Accumulo iterator.
-  *
-  * The main reason this class exists rather than using {@code IteratorSetting} directly to enable the priorities
-  * to be automatically assigned at scan time.
   */
-final class IteratorConfiguration(
-  val name : String,
-  val iteratorClass : String,
-  val options : Map[String, String] = Map.empty
+final case class IteratorConfiguration(
+  name : String,
+  iteratorClass : String,
+  options : Map[String, String] = Map.empty
 ) extends Serializable {
   /**
     * Constructs an [[IteratorSetting]] with the specified priority.
@@ -22,6 +19,19 @@ final class IteratorConfiguration(
     * @param priority the priority to assign the iterator.
     * @return an Accumulo [[IteratorSetting]].
     */
-  def toIteratorSetting(priority : Int) : IteratorSetting =
-    new IteratorSetting(priority, name, iteratorClass, options.asJava)
+  def toIteratorSetting(priority : IteratorConfiguration.Priority) : IteratorSetting =
+    new IteratorSetting(priority.intValue, name, iteratorClass, options.asJava)
+}
+
+
+object IteratorConfiguration {
+
+  /**
+    * Priority to assign to an iterator.
+    *
+    * @param intValue integer priority value.
+    */
+  final case class Priority(intValue : Int) extends AnyVal with Serializable
+
+  val MaxPriority = Priority(Int.MaxValue)
 }
