@@ -4,7 +4,12 @@ organization in ThisBuild := "io.github.reggert.cumulative"
 
 version in ThisBuild := "0.0.1-SNAPSHOT"
 
-scalaVersion in ThisBuild := "2.12.4"
+lazy val scala2_10 = "2.10.7"
+lazy val scala2_11 = "2.11.12"
+lazy val scala2_12 = "2.12.8"
+lazy val scalaVersions = Seq(scala2_10, scala2_11, scala2_12)
+
+scalaVersion in ThisBuild := scala2_12
 
 javacOptions in ThisBuild ++= Seq("-source", "1.8", "-target", "1.8")
 
@@ -70,7 +75,7 @@ lazy val core = (project in file("cumulative-core")).settings(
     scalaARM,
     "org.scala-lang" % "scala-library" % scalaVersion.value % Compile
   ),
-  crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.4")
+  crossScalaVersions := scalaVersions
 )
 
 lazy val model = (project in file("cumulative-model")).settings(
@@ -82,6 +87,6 @@ lazy val model = (project in file("cumulative-model")).settings(
     scalaMock,
     "org.scala-lang" % "scala-library" % scalaVersion.value % Compile
   ),
-  crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.4")
+  crossScalaVersions := scalaVersions
 ).dependsOn(core)
 
