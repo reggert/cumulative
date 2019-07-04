@@ -85,7 +85,7 @@ package object data {
         * Converts this timestamp to an [[Instant]], assuming it does not represent a logical time.
         * @return an Instant.
         */
-      def toInstant = Instant.ofEpochMilli(longValue)
+      def toInstant: Instant = Instant.ofEpochMilli(longValue)
 
       override def isSpecified: Boolean = true
     }
@@ -107,11 +107,15 @@ package object data {
     /**
       * Default ordering for timestamps. Note that unspecified timestamps sort higher than specified ones.
       */
-    implicit val timestampOrdering : Ordering[Timestamp] = (x: Timestamp, y: Timestamp) => (x, y) match {
-      case (Specified(a), Specified(b)) => implicitly[Ordering[Long]].compare(a, b)
-      case (Unspecified, Specified(_)) => 1
-      case (Specified(_), Unspecified) => -1
-      case (Unspecified, Unspecified) => 0
+    //noinspection ConvertExpressionToSAM
+    // Using SAM prevents cross compiling with earlier versions of Scala.
+    implicit val timestampOrdering : Ordering[Timestamp] = new Ordering[Timestamp] {
+      override def compare (x: Timestamp, y: Timestamp): Int = (x, y) match {
+        case (Specified(a), Specified(b)) => implicitly[Ordering[Long]].compare(a, b)
+        case (Unspecified, Specified(_)) => 1
+        case (Specified(_), Unspecified) => -1
+        case (Unspecified, Unspecified) => 0
+      }
     }
   }
 
