@@ -75,7 +75,8 @@ lazy val core = (project in file("cumulative-core")).settings(
     scalaARM,
     "org.scala-lang" % "scala-library" % scalaVersion.value % Compile
   ),
-  crossScalaVersions := scalaVersions
+  crossScalaVersions := scalaVersions,
+  fork in Test := true
 )
 
 lazy val model = (project in file("cumulative-model")).settings(
@@ -87,6 +88,7 @@ lazy val model = (project in file("cumulative-model")).settings(
     scalaMock,
     "org.scala-lang" % "scala-library" % scalaVersion.value % Compile
   ),
-  crossScalaVersions := scalaVersions
+  crossScalaVersions := scalaVersions,
+  fork in Test := true
 ).dependsOn(core)
 
