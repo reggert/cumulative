@@ -9,7 +9,7 @@ import org.scalatest.{FunSuite, Matchers}
 class TableNameTest extends FunSuite with Matchers {
 
   test("TableName constructor accepts a valid namespace and name") {
-    val ns = "testns"
+    val ns = Namespace("testns")
     val name = "testname"
     val tableName = TableName(ns, name)
     tableName.namespace should equal (ns)
@@ -17,23 +17,22 @@ class TableNameTest extends FunSuite with Matchers {
   }
 
   test("TableName constructor accepts an empty namespace and valid name") {
-    val ns = ""
+    val ns = Namespace.Default
     val name = "testname"
     val tableName = TableName(ns, name)
     tableName.namespace should equal (ns)
     tableName.name should equal (name)
   }
 
-  test("TableName constructor rejects an invalid namespace") {
+  test("Namespace constructor rejects an invalid namespace") {
     val ns = "1-.d"
-    val name = "testname"
     assertThrows[IllegalArgumentException] {
-      TableName(ns, name)
+      Namespace(ns)
     }
   }
 
   test("TableName constructor rejects an invalid name") {
-    val ns = ""
+    val ns = Namespace.Default
     val name = "@@@."
     assertThrows[IllegalArgumentException] {
       TableName(ns, name)
@@ -41,7 +40,7 @@ class TableNameTest extends FunSuite with Matchers {
   }
 
   test("TableName constructor rejects an empty name") {
-    val ns = ""
+    val ns = Namespace.Default
     val name = ""
     assertThrows[IllegalArgumentException] {
       TableName(ns, name)
@@ -50,7 +49,7 @@ class TableNameTest extends FunSuite with Matchers {
 
   test("TableName.apply accepts a valid plain name") {
     val tableName = TableName("testname")
-    tableName.namespace shouldBe empty
+    tableName.namespace should equal (Namespace.Default)
     tableName.name should equal ("testname")
   }
 
@@ -67,13 +66,13 @@ class TableNameTest extends FunSuite with Matchers {
   }
 
   test("TableName.tableNameOrdering sorts by namespace first") {
-    TableName("a.y") should be < (TableName("b.x"))
-    TableName("c.x") should be > (TableName("b.z"))
+    TableName("a.y") should be < TableName("b.x")
+    TableName("c.x") should be > TableName("b.z")
   }
 
   test("TableName.tableNameOrdering sorts by name second") {
-    TableName("a.x") should be < (TableName("a.y"))
-    TableName("a.z") should be > (TableName("a.y"))
+    TableName("a.x") should be < TableName("a.y")
+    TableName("a.z") should be > TableName("a.y")
   }
 
   test("TableName.toString") {
