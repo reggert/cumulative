@@ -1,10 +1,7 @@
 package io.github.reggert.cumulative.core.mutate
 
 import io.github.reggert.cumulative.core.{ConnectorProvider, TableName}
-import org.apache.accumulo.core.client.{BatchWriter, ConditionalWriter, Connector, MultiTableBatchWriter}
-
-import scala.util.Try
-
+import org.apache.accumulo.core.client.{BatchWriter, Connector}
 import resource._
 
 
@@ -19,40 +16,22 @@ trait TableWriter extends Serializable {
     *
     * @param mutations mutations to write.
     */
-  def apply(mutations : TraversableOnce[RowMutation]) : Unit
-}
+  def apply(mutations : TraversableOnce[RowMutation]) : Unit =
+    session.foreach {s => mutations.foreach(s.write)}
 
-
-/**
-  * Interface for classes that write to multiple tables.
-  * This is intended as a serializable facade to Accumulo's [[MultiTableBatchWriter]].
-  */
-trait MultiTableWriter extends Serializable {
   /**
-    * Writes the specified collection of mutations to Accumulo, flushes the buffers, and cleans up any
-    * underlying resources.
+    * Obtains a resource-managed session for writing mutations.
     *
-    * @param mutationsByTable mutations to write, keyed by table name.
+    * @return a writer session as a managed resource.
     */
-  def apply(mutationsByTable : TraversableOnce[(TableName, RowMutation)]) : Unit
-}
-
-
-trait ConditionalTableWriter extends Serializable {
-  /**
-    * Conditionally writes the specified collection of mutations to Accumulo, flushes the buffers, and cleans
-    * up any underlying resources.
-    *
-    * @param mutations mutations to write.
-    * @return the results of attempting to write the mutations.
-    */
-  def apply(mutations : Traversable[ConditionalRowMutation]) : List[ConditionalTableWriter.Result]
+  def session : ManagedResource[TableWriter.Session]
 }
 
 
 object TableWriter {
   /**
     * Constructs a `TableWriter` for the specified table.
+    *
     * @param tableName         the table to which to write.
     * @param connectorProvider provider of the Accumulo [[Connector]].
     * @param writerSettings settings to use.
@@ -61,114 +40,48 @@ object TableWriter {
   def apply(tableName: TableName)(implicit
     connectorProvider : ConnectorProvider,
     writerSettings: WriterSettings = WriterSettings()
-  ) : TableWriter = new DefaultImplementation(tableName)
-
-  /**
-    * Default implementation of `TableWriter`.
-    * @param tableName table to which to write.
-    * @param connectorProvider provider of Accumulo [[Connector]].
-    * @param writerSettings settings to use.
-    */
-  private final class DefaultImplementation(val tableName : TableName)(implicit
-    connectorProvider : ConnectorProvider,
-    writerSettings: WriterSettings
-  ) extends TableWriter {
-    override def apply(mutations: TraversableOnce[RowMutation]): Unit =
+  ) : TableWriter = new TableWriter {
+    override def session: ManagedResource[Session] =
       managed(
         connectorProvider.connector.createBatchWriter(
           tableName.toString,
           writerSettings.toBatchWriterConfig
         )
-      ).foreach { batchWriter =>
-        mutations.map(_.toAccumuloMutation).foreach(batchWriter.addMutation)
-      }
+      ).map(Session(_))
+  }
+
+  /**
+    * Buffered session to write to a single Accumulo table.
+    */
+  trait Session {
+    /**
+      * Buffers the specified mutation to write to the tablet server.
+      *
+      * @param mutation mutation to write.
+      */
+    def write(mutation : RowMutation) : Unit
+
+    /**
+      * Flushes all buffered mutations to Accumulo.
+      */
+    def flush() : Unit
+  }
+
+  object Session {
+    /**
+      * Creates a session that wraps a [[BatchWriter]].
+      *
+      * @param batchWriter the [[BatchWriter]] to wrap.
+      */
+    def apply(batchWriter: BatchWriter): Session = new Session {
+      override def write(mutation: RowMutation): Unit = batchWriter.addMutation(mutation.toAccumuloMutation)
+      override def flush(): Unit = batchWriter.flush()
+    }
   }
 }
 
 
-object MultiTableWriter {
-  /**
-    * Constructs a `MultiTableWriter` for the specified table.
-    * @param connectorProvider provider of the Accumulo [[Connector]].
-    * @param writerSettings settings to use.
-    * @return a new `MultiTableWriter`.
-    */
-  def apply()(implicit
-    connectorProvider : ConnectorProvider,
-    writerSettings: WriterSettings = WriterSettings()
-  ) : MultiTableWriter = new DefaultImplementation
-
-  /**
-    * Default implementation of `MultiTableWriter`.
-    * @param connectorProvider provider of Accumulo [[Connector]].
-    * @param writerSettings settings to use.
-    */
-  private final class DefaultImplementation(implicit
-    connectorProvider : ConnectorProvider,
-    writerSettings: WriterSettings
-  ) extends MultiTableWriter {
-    override def apply(mutationsByTable: TraversableOnce[(TableName, RowMutation)]): Unit =
-      managed(
-        connectorProvider.connector.createMultiTableBatchWriter(writerSettings.toBatchWriterConfig)
-      ).foreach { multiTableBatchWriter =>
-        mutationsByTable.foreach {
-          case (tableName, rowMutation) =>
-            val batchWriter = multiTableBatchWriter.getBatchWriter(tableName.toString)
-            batchWriter.addMutation(rowMutation.toAccumuloMutation)
-        }
-      }
-  }
-}
 
 
-object ConditionalTableWriter {
 
-  /**
-    * Result returned from a conditional write.
-    *
-    * @param mutation the conditional mutation that was attempted.
-    * @param server the tablet server it affected.
-    * @param status the status of the mutation, or an exception if the status could not be obtained.
-    */
-  final case class Result(
-    mutation : ConditionalRowMutation,
-    server : String,
-    status : Try[ConditionalWriter.Status]
-  )
 
-  /**
-    * Constructs a `ConditionalTableWriter` for the specified table.
-    * @param tableName         the table to which to write.
-    * @param connectorProvider provider of the Accumulo [[Connector]].
-    * @param writerSettings settings to use.
-    * @return a new `ConditionalTableWriter`.
-    */
-  def apply(tableName: TableName)(implicit
-    connectorProvider : ConnectorProvider,
-    writerSettings: WriterSettings = WriterSettings()
-  ) : ConditionalTableWriter = new DefaultImplementation(tableName)
-
-  /**
-    * Default implementation of `ConditionalTableWriter`.
-    * @param tableName table to which to write.
-    * @param connectorProvider provider of Accumulo [[Connector]].
-    * @param writerSettings settings to use.
-    */
-  private final class DefaultImplementation(val tableName : TableName)(implicit
-    connectorProvider : ConnectorProvider,
-    writerSettings: WriterSettings
-  ) extends ConditionalTableWriter {
-    override def apply(mutations: Traversable[ConditionalRowMutation]): List[Result] =
-      managed(
-        connectorProvider.connector.createConditionalWriter(
-          tableName.toString,
-          writerSettings.toConditionalWriterConfig
-        )
-      ).acquireAndGet { conditionalWriter =>
-        mutations.map { mutation =>
-          val result = conditionalWriter.write(mutation.toAccumuloMutation)
-          Result(mutation, result.getTabletServer, Try(result.getStatus))
-        }.toList
-      }
-  }
-}
