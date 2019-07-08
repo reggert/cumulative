@@ -55,7 +55,7 @@ class TableNameTest extends FunSuite with Matchers {
 
   test("TableName.apply accepts a valid qualified name") {
     val tableName = TableName("testns.testname")
-    tableName.namespace should equal ("testns")
+    tableName.namespace should equal (Namespace("testns"))
     tableName.name should equal ("testname")
   }
 

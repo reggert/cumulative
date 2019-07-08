@@ -9,6 +9,7 @@ import scala.util.matching.Regex
 @SerialVersionUID(1L)
 final case class TableName(namespace : Namespace, name : String) {
   require(TableName.ValidName.unapplySeq(name).nonEmpty, s"Invalid table name: $name")
+  require(name.nonEmpty, "Empty table name is not allowed")
 
   override def toString: String =
     if (namespace == Namespace.Default)
