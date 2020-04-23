@@ -62,6 +62,7 @@ lazy val hadoopMapReduce = hadoopGroupId % "hadoop-mapreduce" % hadoopVersion % 
  */
 lazy val log4j1 = "log4j" % "log4j" % "1.2.17" % Test
 
+lazy val scalaSwing = "org.scala-lang.modules" %% "scala-swing" % "2.1.1"
 
 lazy val core = (project in file("cumulative-core")).settings(
   name := "cumulative-core",
@@ -98,4 +99,18 @@ lazy val model = (project in file("cumulative-model")).settings(
   crossScalaVersions := scalaVersions,
   fork in Test := true
 ).dependsOn(core)
+
+lazy val ui = (project in file("cumulative-ui")).settings(
+  name := "cumulative-ui",
+  autoScalaLibrary := true,
+  libraryDependencies := Seq(
+    accumuloCore,
+    scalaTest,
+    scalaMock,
+    scalaSwing,
+    "org.scala-lang" % "scala-library" % scalaVersion.value % Compile
+  ),
+  crossScalaVersions := scalaVersions,
+  fork in Test := true
+).dependsOn(core, model)
 
