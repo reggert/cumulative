@@ -64,6 +64,8 @@ lazy val log4j1 = "log4j" % "log4j" % "1.2.17" % Test
 
 lazy val scalaSwing = "org.scala-lang.modules" %% "scala-swing" % "2.1.1"
 
+lazy val scopt = "com.github.scopt" %% "scopt" % "4.0.0-RC2"
+
 lazy val core = (project in file("cumulative-core")).settings(
   name := "cumulative-core",
   autoScalaLibrary := true,
@@ -108,6 +110,7 @@ lazy val ui = (project in file("cumulative-ui")).settings(
     scalaTest,
     scalaMock,
     scalaSwing,
+    scopt,
     "org.scala-lang" % "scala-library" % scalaVersion.value % Compile
   ),
   crossScalaVersions := scalaVersions,
