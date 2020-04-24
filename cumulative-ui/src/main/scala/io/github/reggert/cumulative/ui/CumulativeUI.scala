@@ -2,11 +2,13 @@ package io.github.reggert.cumulative.ui
 
 import java.io.File
 
+import javax.swing.JDesktopPane
 import org.apache.accumulo.core.client.security.tokens.{AuthenticationToken, KerberosToken, PasswordToken}
 import org.apache.accumulo.core.client.{ClientConfiguration, Connector, ZooKeeperInstance}
 import scopt.OParser
 
-import scala.swing.Frame
+import scala.swing.event.Key
+import scala.swing.{Action, Component, Frame, MainFrame, Menu, MenuBar, MenuItem, ScrollPane, Table}
 import scala.util.Try
 
 /**
@@ -14,8 +16,26 @@ import scala.util.Try
   */
 object CumulativeUI extends App {
   OParser.parse(CumulativeUIConfig.parser, args, CumulativeUIConfig()) foreach { config =>
-    val frame = new Frame {
+    val desktop = Component.wrap(new JDesktopPane)
+    new MainFrame { main =>
       title = s"CumulativeUI: ${config.instance.getInstanceName}"
+      contents = desktop
+      menuBar = new MenuBar {
+        contents += new Menu("Cluster") {
+          contents += new MenuItem("Exit") {
+            mnemonic = Key.X
+            reactions += {
+              case _ => main.close()
+            }
+          }
+        }
+        contents += new Menu("Administration") {
+
+        }
+        contents += new Menu("Data") {
+
+        }
+      }
     }
   }
 }
