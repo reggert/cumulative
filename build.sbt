@@ -53,7 +53,7 @@ lazy val scalaMock = "org.scalamock" %% "scalamock" % "4.0.0" % Test
 val hadoopGroupId = "org.apache.hadoop"
 val hadoopVersion = "3.2.0"
 lazy val hadoopClientAPI = hadoopGroupId % "hadoop-client-api" % hadoopVersion % Compile
-lazy val hadoopClientRuntime = hadoopGroupId % "hadoop-client-runtime" % hadoopVersion % Runtime
+lazy val hadoopClientRuntime = hadoopGroupId % "hadoop-client-runtime" % hadoopVersion % Compile
 lazy val hadoopMapReduce = hadoopGroupId % "hadoop-mapreduce" % hadoopVersion % Compile
 
 /*

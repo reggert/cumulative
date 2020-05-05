@@ -25,7 +25,7 @@ object CumulativeUI extends App {
           contents += new MenuItem("Exit") {
             mnemonic = Key.X
             reactions += {
-              case _ => main.close()
+              case _ => main.dispose()
             }
           }
         }
@@ -36,6 +36,8 @@ object CumulativeUI extends App {
 
         }
       }
+      pack()
+      open()
     }
   }
 }
@@ -57,7 +59,11 @@ final case class CumulativeUIConfig(
     else {
       password.map(pwd => new PasswordToken(pwd))
         .getOrElse {
-          new PasswordToken(System.console().readPassword("Enter password: "))
+          val cons = System.console()
+          if (cons == null) {
+            throw new IllegalStateException("No password specified, and no console available")
+          }
+          new PasswordToken(cons.readPassword("Enter password: "))
         }
     }
   }
@@ -82,32 +88,34 @@ object CumulativeUIConfig {
 
   val parser: OParser[Unit, CumulativeUIConfig] = {
     import builder._
-    programName("CumulativeUI")
-    head("CumulativeUI")
-    opt[String]('u', "user")
-      .action((value, options) => options.copy(user = value))
-      .text("username to use with Accumulo")
-    opt[String]('p', "password")
-      .action((value, options) => options.copy(password = Some(value), useKerberos = false))
-      .text("password to use with Accumulo")
-    opt[Option[File]]('K', "kerberos")
-      .action((value, options) => options.copy(useKerberos = true, kerberosKeytab = value))
-      .valueName("keytab-file")
-      .text("enables Kerberos authentication and optionally specifies a keytab file")
-    opt[String]('c', "connect")
-      .action((value, options) => options.copy(zookeeperConnectString = Some(value)))
-      .text("Zookeeper connection string")
-      .valueName("server:port,...")
-    opt[String]('i', "instance")
-      .action((value, options) => options.copy(instanceName = Some(value)))
-      .text("Accumulo instance name")
-    opt[File]('C', "config-file")
-      .action((value, options) => options.copy(configFile = Some(value)))
-      .text("Accumulo config file")
-    checkConfig { config =>
-      Try(config.connector.securityOperations().authenticateUser(config.user, config.authenticationToken))
-        .map(result => if (result) success else failure("Authentication failed"))
-        .get
-    }
+    OParser.sequence(
+      programName("CumulativeUI"),
+      head("CumulativeUI"),
+      opt[String]('u', "user")
+        .action((value, options) => options.copy(user = value))
+        .text("username to use with Accumulo"),
+      opt[String]('p', "password")
+        .action((value, options) => options.copy(password = Some(value), useKerberos = false))
+        .text("password to use with Accumulo"),
+      opt[Option[File]]('K', "kerberos")
+        .action((value, options) => options.copy(useKerberos = true, kerberosKeytab = value))
+        .valueName("keytab-file")
+        .text("enables Kerberos authentication and optionally specifies a keytab file"),
+      opt[String]('c', "connect")
+        .action((value, options) => options.copy(zookeeperConnectString = Some(value)))
+        .text("Zookeeper connection string")
+        .valueName("server:port,..."),
+      opt[String]('i', "instance")
+        .action((value, options) => options.copy(instanceName = Some(value)))
+        .text("Accumulo instance name"),
+      opt[File]('C', "config-file")
+        .action((value, options) => options.copy(configFile = Some(value)))
+        .text("Accumulo config file"),
+      checkConfig { config =>
+        Try(config.connector.securityOperations().authenticateUser(config.user, config.authenticationToken))
+          .map(result => if (result) success else failure("Authentication failed"))
+          .get
+      }
+    )
   }
 }
