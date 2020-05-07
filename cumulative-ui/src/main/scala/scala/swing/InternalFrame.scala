@@ -2,6 +2,7 @@ package scala.swing
 
 import javax.swing.{Icon, JInternalFrame, WindowConstants}
 
+import scala.swing.MenuBar.NoMenuBar
 import scala.swing.event.{InternalFrameActivated, InternalFrameClosed, InternalFrameClosing, InternalFrameDeactivated, InternalFrameDeiconified, InternalFrameIconified, InternalFrameOpened}
 
 
@@ -22,11 +23,11 @@ class InternalFrame extends Component with RootPanel with Publisher { outer =>
   def title_=(s: String): Unit = peer.setTitle(s)
 
   /**
-    * The menu bar of this frame or `NoMenuBar` if no menu bar is set.
+    * The menu bar of this frame or [[NoMenuBar]] if no menu bar is set.
     */
   def menuBar: MenuBar =
     peer.getJMenuBar match {
-      case null => null
+      case null => NoMenuBar
       case m => UIElement.wrap(m).asInstanceOf[MenuBar]
     }
 
