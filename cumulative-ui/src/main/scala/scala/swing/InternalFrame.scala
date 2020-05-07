@@ -25,11 +25,10 @@ class InternalFrame extends Component with RootPanel with Publisher { outer =>
   /**
     * The menu bar of this frame or [[NoMenuBar]] if no menu bar is set.
     */
-  def menuBar: MenuBar =
-    peer.getJMenuBar match {
-      case null => NoMenuBar
-      case m => UIElement.wrap(m).asInstanceOf[MenuBar]
-    }
+  def menuBar: MenuBar = {
+    val m = UIElement.cachedWrapper[MenuBar](peer.getJMenuBar)
+    if (m != null) m else MenuBar.NoMenuBar
+  }
 
   /**
     * Set the current menu bar of this frame. Pass `NoMenuBar` if this frame
